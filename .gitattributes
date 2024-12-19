@@ -1,1 +1,32 @@
+# Mark distribution files as vendored
 dist/* linguist-vendored
+
+# Handle text files
+*.txt text eol=lf
+*.js text eol=lf
+*.ts text eol=lf
+*.tsx text eol=lf
+*.json text eol=lf
+*.scss text eol=lf
+*.css text eol=lf
+*.md text eol=lf
+
+# Handle binary files
+*.png binary
+*.jpg binary
+*.gif binary
+*.ico binary
+*.wav binary
+*.mp3 binary
+
+# Handle specific file types
+*.exe binary
+*.dll binary
+
+# Handle documentation
+docs/* linguist-documentation
+*.md linguist-documentation=false
+
+# Handle generated files
+package-lock.json linguist-generated
+yarn.lock linguist-generated
