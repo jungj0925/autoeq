@@ -18,25 +18,19 @@ impl EqualizerWindow {
                     for i in 0..10 {
                         let freq = 32.0 * (2.0_f32.powi(i as i32));
                         let label = format!("{:.0}Hz", freq);
-                        
-                        // Create a unique ID using string hash
                         let token = ui.push_id(&label);
-                        
                         let mut band_value = bands[i];
-                        
-                        // Use slider with proper configuration
+
                         if ui.slider_config("##v", -12.0f32, 12.0f32)
                             .display_format("%.1f dB")
                             .build(&mut band_value)
                         {
                             bands[i] = band_value;
                         }
-                        
-                        // Add frequency label below
+
                         ui.text(&label);
-                        
                         token.pop();
-                        
+
                         if i < 9 {
                             ui.same_line();
                             ui.dummy([20.0, 1.0]);
@@ -46,4 +40,4 @@ impl EqualizerWindow {
                 }
             });
     }
-} 
+}
