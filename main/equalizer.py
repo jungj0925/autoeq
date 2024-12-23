@@ -160,18 +160,15 @@ class EqualizerWindow(QWidget):
         sos = np.hstack([b, a])
         return np.array([sos])
 
+
     def apply_equalizer_to_audio(self, audio_data):
         """
-        Refined equalizer: Handle gains properly and reduce distortions.
+        Spotify-style equalizer using peaking EQ filters in SOS format.
         """
         # Sanitize and validate input
         audio_data = np.nan_to_num(audio_data, nan=0.0, posinf=0.0, neginf=0.0)
         if len(audio_data) == 0 or np.max(np.abs(audio_data)) == 0:
             return np.zeros_like(audio_data).astype(np.int16)
-
-        # High-pass filter to remove subsonic frequencies
-        sos_hp = butter(1, 20 / (44100 / 2), btype='highpass', output='sos')  # High-pass filter in SOS format
-        audio_data = sosfilt(sos_hp, audio_data)
 
         # Calculate RMS and handle silence
         rms = np.sqrt(np.mean(audio_data**2))
@@ -182,7 +179,7 @@ class EqualizerWindow(QWidget):
         bands = self.bands  # Center frequencies for bands
         gains = [slider.value() for slider in self.sliders]  # Gains in dB
         sample_rate = 44100
-        processed_audio = np.zeros_like(audio_data, dtype=np.float32)
+        processed_audio = audio_data.astype(np.float32)
 
         for i, gain in enumerate(gains):
             if gain == 0:  # Skip bands with no adjustment
@@ -191,29 +188,18 @@ class EqualizerWindow(QWidget):
             try:
                 # Use peaking EQ filter
                 f0 = bands[i]
-                Q = 0.7 if f0 < 250 else 2.0  # Broader filter for low frequencies
+                Q = 1.0
                 sos = self.peaking_eq(f0, Q, gain, sample_rate)  # Get SOS array
-
-                # Apply the filter to the original audio
-                band_audio = sosfilt(sos, audio_data)
-
-                # Scale the band contribution by the gain factor
-                gain_factor = 10 ** (gain / 20) if gain > 0 else 10 ** (gain / 20)
-                band_audio *= gain_factor
-
-                # Mix filtered band into processed audio
-                processed_audio += band_audio
+                processed_audio = sosfilt(sos, processed_audio)
             except ValueError as e:
                 print(f"Filter design failed for band {bands[i]} Hz: {e}")
 
-        # Blend processed and original audio for smoother output
-        mixed_audio = 0.7 * audio_data + 0.3 * processed_audio
-
         # Normalize processed audio
-        max_val = np.max(np.abs(mixed_audio))
+        max_val = np.max(np.abs(processed_audio))
         if max_val > 32767:
-            mixed_audio = (mixed_audio / max_val) * 32767
+            processed_audio = (processed_audio / max_val) * 32767
 
         # Clip and return as int16
-        return np.clip(mixed_audio, -32768, 32767).astype(np.int16)
+        return np.clip(processed_audio, -32768, 32767).astype(np.int16)
+
 
