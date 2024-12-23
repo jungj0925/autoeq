@@ -39,7 +39,7 @@ class EqualizerWindow(QWidget):
     def start_stream(self):
         self.stream = self.p.open(
             format=pyaudio.paInt16,
-            channels=2,  # Use 2 for stereo input and output
+            channels=1,  # Use 2 for stereo input and output
             rate=44100,  # Common sample rate for audio
             input=True,  # Enable audio input
             output=True,  # Enable audio output
@@ -98,7 +98,20 @@ class EqualizerWindow(QWidget):
     def apply_equalizer_to_audio(self, audio_data):
         # Frequency bands for the equalizer
         bands = [60, 170, 310, 600, 1000, 3000, 6000, 12000, 14000, 16000]
-        gains = [slider.value() for slider in self.sliders]  # Slider values in dB
+
+        # Read slider values (gains in dB)
+        gains = [slider.value() for slider in self.sliders]
+        print(f"Slider values: {gains}")  # Debug slider values
+
+        # Handle silent input
+        if np.max(np.abs(audio_data)) < 100:  # Silence threshold
+            print("Silent input detected, bypassing filters.")
+            return audio_data.astype(np.int16)
+
+        # Handle passthrough when all gains are zero
+        if all(gain == 0 for gain in gains):
+            print("All gains are 0, bypassing equalizer.")
+            return audio_data.astype(np.int16)
 
         # Initialize processed audio
         processed_audio = np.zeros_like(audio_data, dtype=np.float32)
@@ -106,15 +119,17 @@ class EqualizerWindow(QWidget):
         for i, gain in enumerate(gains):
             if gain != 0:  # Only process if gain is non-zero
                 try:
-                    # Design the band-pass filter
-                    low = max(1, bands[i] - 50) / (44100 / 2)  # Normalize frequencies
-                    high = (bands[i] + 50) / (44100 / 2)
-                    b, a = butter(2, [low, high], btype='band')  # Band-pass filter
+                    # Normalize band frequencies
+                    low = max(1, bands[i] - 100) / (44100 / 2)
+                    high = (bands[i] + 100) / (44100 / 2)
+
+                    # Design a stable band-pass filter
+                    b, a = butter(1, [low, high], btype='band')  # 1st-order filter
 
                     # Apply the filter
                     filtered_data = lfilter(b, a, audio_data)
 
-                    # Apply gain in linear scale
+                    # Apply gain (convert dB to linear scale)
                     filtered_data *= 10 ** (gain / 20)
 
                     # Accumulate the filtered data
@@ -122,12 +137,19 @@ class EqualizerWindow(QWidget):
                 except ValueError as e:
                     print(f"Filter design failed for band {bands[i]} Hz: {e}")
 
-        # Normalize to prevent overflow
-        max_val = np.max(np.abs(processed_audio))
-        if max_val > 0:
-            processed_audio = (processed_audio / max_val) * 32767
+        # Add processed audio to the original input for proper mixing
+        mixed_audio = audio_data + processed_audio.astype(np.int16)
+
+        # Normalize mixed audio to prevent overflow
+        max_val = np.max(np.abs(mixed_audio))
+        if max_val > 32767:
+            mixed_audio = (mixed_audio / max_val) * 32767
 
         # Convert to int16 for audio playback
-        return np.clip(processed_audio, -32768, 32767).astype(np.int16)
+        return np.clip(mixed_audio, -32768, 32767).astype(np.int16)
+
+
+
+
 
 
