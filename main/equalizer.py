@@ -293,10 +293,10 @@ class EqualizerWindow(QWidget):
 
     def apply_equalizer_to_audio(self, audio_data):
         """
-        Spotify-style equalizer using peaking EQ filters in SOS format.
+        Spotify-style equalizer using peaking EQ filters in SOS format, with gain compensation.
         """
         # Sanitize and validate input
-        audio_data = np.nan_to_num(audio_data, nan=0.0, posinf=0.0, neginf=0.0)  # Replace NaN/Inf with 0
+        audio_data = np.nan_to_num(audio_data, nan=0.0, posinf=0.0, neginf=0.0)
         if len(audio_data) == 0 or np.max(np.abs(audio_data)) == 0:
             return np.zeros_like(audio_data).astype(np.int16)
 
@@ -309,38 +309,41 @@ class EqualizerWindow(QWidget):
         bands = self.bands  # Center frequencies for bands
         gains = [slider.value() for slider in self.sliders]  # Gains in dB
         sample_rate = 44100
-        processed_audio = audio_data.astype(np.float32)
+        processed_audio = np.zeros_like(audio_data, dtype=np.float32)
+
+        # Accumulate energy normalization factor
+        total_gain = 0.0
+        gain_factors = []
 
         for i, gain in enumerate(gains):
             if gain == 0:  # Skip bands with no adjustment
                 continue
 
-            # Clamp extreme gain values to avoid instability
-            gain = max(min(gain, 6), -6)  # Limit to ±6 dB for stability
-
             try:
                 # Use peaking EQ filter
                 f0 = bands[i]
-                Q = 1.0  # Adjust Q for smoother filtering
+                Q = 1.0  # Standard Q for smooth filtering
                 sos = self.peaking_eq(f0, Q, gain, sample_rate)  # Get SOS array
-                band_audio = sosfilt(sos, processed_audio)
 
-                # Blend filtered band into processed audio
-                processed_audio += band_audio * (10 ** (gain / 20))  # Apply gain in linear scale
+                # Apply the filter
+                band_audio = sosfilt(sos, audio_data)
+
+                # Convert gain from dB to linear scale and track total gain
+                gain_factor = 10 ** (gain / 20)
+                processed_audio += band_audio * gain_factor
+                gain_factors.append(gain_factor)
+                total_gain += gain_factor
             except ValueError as e:
                 print(f"Filter design failed for band {bands[i]} Hz: {e}")
 
-        # Normalize processed audio
+        # Normalize by the total applied gain to prevent overall volume increase
+        if total_gain > 0:
+            processed_audio /= total_gain
+
+        # Normalize processed audio to prevent clipping
         max_val = np.max(np.abs(processed_audio))
-        if max_val > 0:  # Prevent division by zero
+        if max_val > 32767:
             processed_audio = (processed_audio / max_val) * 32767
 
-        # Apply a final low-pass filter to reduce high-frequency noise
-        try:
-            sos_lowpass = self.peaking_eq(20000, 0.7, 0, sample_rate)  # Smoothen output
-            processed_audio = sosfilt(sos_lowpass, processed_audio)
-        except ValueError as e:
-            print(f"Low-pass filter design failed: {e}")
-
-        # Clip and return as int16
+        # Clip the final output to the int16 range
         return np.clip(processed_audio, -32768, 32767).astype(np.int16)
