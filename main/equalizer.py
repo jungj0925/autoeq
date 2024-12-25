@@ -132,6 +132,14 @@ class EqualizerWindow(QWidget):
         self.tray_icon.setContextMenu(tray_menu)
         self.tray_icon.show()
 
+        self.auto_eq_enabled = True  # Default to Auto EQ enabled
+
+        # Auto EQ toggle button
+        auto_eq_button = QPushButton("Toggle Auto EQ")
+        auto_eq_button.setToolTip("Enable or disable automatic genre-based equalizer adjustment")
+        auto_eq_button.clicked.connect(self.toggle_auto_eq)
+        buttons_layout.addWidget(auto_eq_button)
+
         # Initialize PyAudio
         self.p = pyaudio.PyAudio()
 
@@ -191,13 +199,30 @@ class EqualizerWindow(QWidget):
         }
 
     def update_now_playing(self):
-        """Fetch and update the 'Now Playing' label with genre information."""
+        """Fetch and update the 'Now Playing' label with genre detection."""
+        if not self.auto_eq_enabled:
+            return
+
         song_info = self.spotify.get_current_song()
-        genre = self.spotify.get_genre_from_spotify()
         if song_info:
-            self.now_playing_label.setText(f"Currently streaming: {song_info} | Genre: {genre}")
+            sub_genres = self.spotify.get_genres_for_song()
+            if sub_genres:
+                broad_genre = self.spotify.predict_broad_genre(sub_genres)
+                self.now_playing_label.setText(f"Currently streaming: {song_info} ({broad_genre})")
+                
+                # Automatically apply the equalizer preset for the detected genre
+                self.apply_preset_by_name(broad_genre)
+            else:
+                self.now_playing_label.setText(f"Currently streaming: {song_info} (Genre: Unknown)")
         else:
             self.now_playing_label.setText("Currently streaming: Not Available")
+
+    def toggle_auto_eq(self):
+        """Toggle the Auto EQ feature."""
+        self.auto_eq_enabled = not self.auto_eq_enabled
+        status = "enabled" if self.auto_eq_enabled else "disabled"
+        QMessageBox.information(self, "Auto EQ Status", f"Auto EQ is now {status}.")
+
 
     def save_custom_preset(self):
         """Save current slider settings as a custom preset."""
@@ -254,6 +279,22 @@ class EqualizerWindow(QWidget):
             self, "Equalizer Status",
             "Equalizer Enabled" if self.equalizer_enabled else "Equalizer Bypassed"
         )
+
+    def apply_preset_by_name(self, preset_name):
+        """
+        Apply a preset by its name and update the dropdown menu.
+        """
+        if preset_name in self.genre_presets:
+            values = self.genre_presets[preset_name]
+            for slider, value in zip(self.sliders, values):
+                slider.setValue(value)
+            # Update the dropdown to match the applied preset
+            self.preset_dropdown.blockSignals(True)  # Prevent triggering signal
+            self.preset_dropdown.setCurrentText(preset_name)
+            self.preset_dropdown.blockSignals(False)
+        else:
+            QMessageBox.warning(self, "Error", f"No preset found for genre: {preset_name}")
+
 
     def audio_callback(self, in_data, frame_count, time_info, status):
         """Process audio data in real-time."""

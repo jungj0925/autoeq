@@ -1,6 +1,7 @@
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
 import os
+import pickle
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -16,6 +17,10 @@ class SpotifyIntegration:
         self.token = None
         self.spotify = None
 
+        # Load trained genre model
+        with open("./genre/genre_model.pkl", "rb") as file:
+            self.genre_model = pickle.load(file)
+
     def log_in(self):
         try:
             self.token = self.spotify_oauth.get_access_token(as_dict=False)
@@ -26,6 +31,7 @@ class SpotifyIntegration:
             return False
 
     def get_current_song(self):
+        """Fetch the current song title and artist."""
         if not self.spotify:
             return None
         try:
@@ -39,20 +45,33 @@ class SpotifyIntegration:
             print(f"Error fetching current song: {e}")
             return None
         
-    def get_genre_from_spotify(self):
+    def get_genres_for_song(self):
         """
         Fetch genre information for the currently playing song using Spotify API.
         """
         if not self.spotify:
-            return None
+            return []
         try:
             current_playback = self.spotify.currently_playing()
             if current_playback and current_playback.get("item"):
                 artist_id = current_playback["item"]["artists"][0]["id"]
                 artist_info = self.spotify.artist(artist_id)
                 genres = artist_info.get("genres", [])
-                return genres[0] if genres else "Unknown"
-            return "Unknown"
+                return genres
+            return []
         except Exception as e:
-            print(f"Error fetching genre: {e}")
+            print(f"Error fetching genres: {e}")
+            return []
+
+    def predict_broad_genre(self, sub_genres):
+        """
+        Predict the broad genre using the trained model based on sub-genres.
+        """
+        if not sub_genres:
+            return "Unknown"
+        try:
+            combined_text = " ".join(sub_genres)
+            return self.genre_model.predict([combined_text])[0]
+        except Exception as e:
+            print(f"Error predicting broad genre: {e}")
             return "Unknown"
