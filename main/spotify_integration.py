@@ -14,7 +14,7 @@ class SpotifyIntegration:
             redirect_uri=os.getenv("SPOTIFY_REDIRECT_URI"),
             scope="user-read-currently-playing"
         )
-        self.token = None
+        self.token_info = None
         self.spotify = None
 
         # Load trained genre model
@@ -22,19 +22,32 @@ class SpotifyIntegration:
             self.genre_model = pickle.load(file)
 
     def log_in(self):
+        """Log in to Spotify and initialize the Spotify client."""
         try:
-            self.token = self.spotify_oauth.get_access_token(as_dict=False)
-            self.spotify = spotipy.Spotify(auth=self.token)
+            self.token_info = self.spotify_oauth.get_access_token(as_dict=True)
+            self.spotify = spotipy.Spotify(auth=self.token_info["access_token"])
             return True
         except Exception as e:
             print(f"Error during Spotify login: {e}")
             return False
+
+    def refresh_token(self):
+        """Refresh the access token if expired."""
+        try:
+            if self.spotify_oauth.is_token_expired(self.token_info):
+                print("Refreshing Spotify access token...")
+                self.token_info = self.spotify_oauth.refresh_access_token(self.token_info["refresh_token"])
+                self.spotify = spotipy.Spotify(auth=self.token_info["access_token"])
+                print("Spotify access token refreshed.")
+        except Exception as e:
+            print(f"Error refreshing token: {e}")
 
     def get_current_song(self):
         """Fetch the current song title and artist."""
         if not self.spotify:
             return None
         try:
+            self.refresh_token()  # Ensure the token is fresh before making API calls
             current_playback = self.spotify.currently_playing()
             if current_playback and current_playback.get("item"):
                 song_name = current_playback["item"]["name"]
@@ -44,14 +57,13 @@ class SpotifyIntegration:
         except Exception as e:
             print(f"Error fetching current song: {e}")
             return None
-        
+
     def get_genres_for_song(self):
-        """
-        Fetch genre information for the currently playing song using Spotify API.
-        """
+        """Fetch genre information for the currently playing song using Spotify API."""
         if not self.spotify:
             return []
         try:
+            self.refresh_token()  # Ensure the token is fresh before making API calls
             current_playback = self.spotify.currently_playing()
             if current_playback and current_playback.get("item"):
                 artist_id = current_playback["item"]["artists"][0]["id"]
@@ -64,9 +76,7 @@ class SpotifyIntegration:
             return []
 
     def predict_broad_genre(self, sub_genres):
-        """
-        Predict the broad genre using the trained model based on sub-genres.
-        """
+        """Predict the broad genre using the trained model based on sub-genres."""
         if not sub_genres:
             return "Unknown"
         try:
