@@ -1,0 +1,71 @@
+{
+    "Pop": [
+        "pop", "dance pop", "electropop", "synth-pop", "k-pop", "latin pop", 
+        "teen pop", "folk pop", "hyperpop", "indie pop", "bedroom pop", 
+        "pop rock", "acoustic pop", "bubblegum pop", "chamber pop", 
+        "dream pop", "future pop", "pop punk", "retro pop", "pop soul"
+    ],
+    "Rock": [
+        "rock", "hard rock", "alternative rock", "classic rock", "punk rock", 
+        "garage rock", "psychedelic rock", "indie rock", "grunge", 
+        "progressive rock", "post-rock", "blues rock", "stoner rock", 
+        "surf rock", "space rock", "art rock", "arena rock", 
+        "math rock", "noise rock", "glam rock", "gothic rock", 
+        "southern rock"
+    ],
+    "Classical": [
+        "classical", "baroque", "romantic", "modern classical", "orchestral", 
+        "symphony", "chamber music", "neo-classical", "opera", "choral", 
+        "avant-garde classical", "piano classical", "string quartet", 
+        "minimalism", "film score", "early music", "sacred music", 
+        "medieval music", "post-classical", "modernist classical"
+    ],
+    "Jazz": [
+        "jazz", "smooth jazz", "bebop", "swing", "fusion", "free jazz", 
+        "latin jazz", "cool jazz", "vocal jazz", "contemporary jazz", 
+        "jazz funk", "traditional jazz", "avant-garde jazz", "soul jazz", 
+        "hard bop", "jazz rock", "gypsy jazz", "acid jazz", "bossa nova", 
+        "modal jazz"
+    ],
+    "Hip-Hop": [
+        "hip hop", "rap", "trap", "conscious hip hop", "gangsta rap", 
+        "east coast rap", "west coast rap", "southern hip hop", "melodic rap", 
+        "old school hip hop", "experimental hip hop", "lo-fi hip hop", 
+        "underground hip hop", "boom bap", "crunk", "cloud rap", 
+        "drill", "grime", "mumble rap", "freestyle rap", "alt rap", 
+        "political rap"
+    ],
+    "Electronic": [
+        "electronic", "edm", "techno", "house", "trance", "dubstep", 
+        "future bass", "synthwave", "glitch hop", "chillwave", "industrial", 
+        "ambient", "drum and bass", "idm", "downtempo", "psytrance", 
+        "breakbeat", "hardstyle", "acid techno", "chiptune", "vaporwave", 
+        "electroclash", "future funk"
+    ],
+    "Acoustic": [
+        "acoustic", "folk", "indie folk", "americana", "bluegrass", 
+        "acoustic pop", "acoustic rock", "singer-songwriter", 
+        "traditional folk", "celtic", "neo-folk", "roots music", 
+        "progressive folk", "alt-folk", "contemporary folk", 
+        "freak folk", "anti-folk", "country folk"
+    ],
+    "Metal": [
+        "metal", "heavy metal", "death metal", "black metal", "thrash metal", 
+        "progressive metal", "power metal", "nu-metal", "doom metal", 
+        "folk metal", "symphonic metal", "viking metal", "speed metal", 
+        "sludge metal", "groove metal", "metalcore", "technical death metal", 
+        "industrial metal", "avant-garde metal", "melodic death metal"
+    ],
+    "Dance": [
+        "dance", "dance pop", "disco", "club", "house", "tech house", 
+        "bass house", "tropical house", "funky house", "progressive house", 
+        "electro", "eurodance", "vocal dance", "dancehall", "dub", 
+        "dance rock", "funk", "future house", "deep house"
+    ],
+    "R&B": [
+        "r&b", "soul", "neo-soul", "contemporary r&b", "quiet storm", 
+        "funk", "urban contemporary", "motown", "blue-eyed soul", 
+        "smooth r&b", "deep soul", "classic r&b", "rhythm and blues", 
+        "new jack swing", "trap soul", "progressive soul", "gospel"
+    ]
+}
