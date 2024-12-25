@@ -2,9 +2,19 @@ import spotipy
 from spotipy.oauth2 import SpotifyOAuth, SpotifyClientCredentials
 import os
 import pickle
+import sys
 from dotenv import load_dotenv
 
 load_dotenv()
+
+def get_resource_path(relative_path):
+    """
+    Get the absolute path to a resource, works for PyInstaller bundled environments.
+    """
+    if hasattr(sys, "_MEIPASS"):
+        # PyInstaller extracts resources to a temporary folder
+        return os.path.join(sys._MEIPASS, relative_path)
+    return os.path.join(os.path.abspath("."), relative_path)
 
 class SpotifyIntegration:
     def __init__(self):
@@ -20,7 +30,7 @@ class SpotifyIntegration:
         self.sp = spotipy.Spotify(auth_manager=self.auth_manager)
 
         # Load trained genre model
-        with open("./genre/genre_model.pkl", "rb") as file:
+        with open(get_resource_path("./genre/genre_model.pkl"), "rb") as file:
             self.genre_model = pickle.load(file)
 
         # Automatically log in
