@@ -20,7 +20,7 @@ class EqualizerWindow(QWidget):
 
         # Initialize presets
         self.default_genre_presets = self.get_default_genre_presets()
-        self.genre_presets = self.load_genre_presets()
+        self.genre_presets = self.get_genre_presets()
         self.custom_presets = self.load_custom_presets()
 
         # Initialize Spotify Integration

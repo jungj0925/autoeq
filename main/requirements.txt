@@ -1,3 +1,6 @@
 PyQt5
 pyaudio
 numpy
+spotipy
+python-dotenv
+scipy
