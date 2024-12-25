@@ -10,7 +10,6 @@ from PyQt5.QtGui import QIcon, QFont
 from scipy.signal import sosfilt
 from spotify_integration import SpotifyIntegration
 
-
 class EqualizerWindow(QWidget):
     def __init__(self):
         super().__init__()
@@ -41,6 +40,11 @@ class EqualizerWindow(QWidget):
         self.now_playing_label.setFont(QFont("Arial", 14, QFont.Bold))
         self.now_playing_label.setStyleSheet("color: #2c3e50; margin: 10px;")
         self.main_layout.addWidget(self.now_playing_label)
+
+        # Spotify Login Button
+        self.spotify_login_button = QPushButton("Log in to Spotify")
+        self.spotify_login_button.clicked.connect(self.spotify_log_in)
+        self.main_layout.addWidget(self.spotify_login_button)
 
         # Timer to update the "Now Playing" label
         self.song_update_timer = QTimer(self)
@@ -138,6 +142,13 @@ class EqualizerWindow(QWidget):
 
         self.start_stream()
 
+    def spotify_log_in(self):
+        """Handle Spotify login process."""
+        if self.spotify.log_in():
+            QMessageBox.information(self, "Spotify Login", "Logged in successfully!")
+        else:
+            QMessageBox.critical(self, "Spotify Login", "Login failed. Please try again.")
+
     def update_preset_dropdown(self):
         """Update the dropdown menu with genre and custom presets."""
         self.preset_dropdown.clear()
@@ -180,13 +191,13 @@ class EqualizerWindow(QWidget):
         }
 
     def update_now_playing(self):
-        """Fetch and update the 'Now Playing' label."""
+        """Fetch and update the 'Now Playing' label with genre information."""
         song_info = self.spotify.get_current_song()
+        genre = self.spotify.get_genre_from_spotify()
         if song_info:
-            self.now_playing_label.setText(f"Currently streaming: {song_info}")
+            self.now_playing_label.setText(f"Currently streaming: {song_info} | Genre: {genre}")
         else:
             self.now_playing_label.setText("Currently streaming: Not Available")
-
 
     def save_custom_preset(self):
         """Save current slider settings as a custom preset."""
@@ -230,12 +241,6 @@ class EqualizerWindow(QWidget):
             self.save_custom_presets()
             self.update_preset_dropdown()
             QMessageBox.information(self, "Success", f"Custom preset '{preset_name}' deleted!")
-
-
-    def reset_sliders(self):
-        """Reset all sliders to 0 dB."""
-        for slider in self.sliders:
-            slider.setValue(0)
 
     def update_slider_label(self):
         """Update the labels showing current slider values."""
