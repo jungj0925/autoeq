@@ -183,21 +183,6 @@ class EqualizerWindow(QWidget):
         for slider in self.sliders:
             slider.setValue(0)
 
-    def get_genre_presets(self):
-        """Return a dictionary of pre-defined genre presets."""
-        return {
-            "Pop": [2, 1, 0, 0, 2, 3, 2, 3, 2, 1],
-            "Rock": [4, 3, 2, 1, 0, 1, 0, -1, -2, -2],
-            "Classical": [0, 0, 1, 1, 2, 3, 2, 3, 2, 1],
-            "Jazz": [2, 3, 2, 1, 1, 2, 1, 1, 1, 0],
-            "Hip-Hop": [6, 4, 2, 1, 0, 2, 3, 4, 2, 1],
-            "Electronic": [6, 4, 3, 2, 0, 2, 4, 6, 5, 3],
-            "Acoustic": [1, 1, 2, 2, 3, 3, 2, 2, 1, 0],
-            "Metal": [5, 4, 3, 1, 1, 1, 0, -1, -2, -3],
-            "Dance": [5, 3, 2, 1, 0, 2, 4, 5, 3, 2],
-            "R&B": [4, 3, 2, 1, 1, 1, 2, 2, 1, 0]
-        }
-
     def update_now_playing(self):
         """Fetch and update the 'Now Playing' label with genre detection."""
         if not self.auto_eq_enabled:
@@ -225,22 +210,71 @@ class EqualizerWindow(QWidget):
 
 
     def save_custom_preset(self):
-        """Save current slider settings as a custom preset."""
+        """
+        Save current slider settings as a custom preset or update an existing genre preset.
+        """
         preset_name = self.preset_name_input.text().strip()
         if not preset_name:
             QMessageBox.warning(self, "Error", "Preset name cannot be empty.")
             return
 
-        # Prevent overwriting genre presets
-        if preset_name in self.genre_presets:
-            QMessageBox.warning(self, "Error", "Preset name conflicts with a genre preset.")
-            return
-
         values = [slider.value() for slider in self.sliders]
-        self.custom_presets[preset_name] = values
-        self.save_custom_presets()
+
+        # Check if the selected preset is a predefined genre
+        if preset_name in self.genre_presets:
+            # Ask the user if they want to overwrite the genre preset
+            reply = QMessageBox.question(
+                self,
+                "Overwrite Genre Preset",
+                f"The preset '{preset_name}' is a predefined genre. Do you want to overwrite it?",
+                QMessageBox.Yes | QMessageBox.No,
+            )
+            if reply == QMessageBox.Yes:
+                self.genre_presets[preset_name] = values
+                QMessageBox.information(self, "Success", f"Genre preset '{preset_name}' updated!")
+            else:
+                return
+
+        # Otherwise, save as a custom preset
+        else:
+            self.custom_presets[preset_name] = values
+            self.save_custom_presets()
+            QMessageBox.information(self, "Success", f"Custom preset '{preset_name}' saved!")
+
         self.update_preset_dropdown()
-        QMessageBox.information(self, "Success", f"Custom preset '{preset_name}' saved!")
+
+    def save_genre_presets(self):
+        """
+        Save updated genre presets to a file.
+        """
+        with open("genre_presets.pkl", "wb") as file:
+            pickle.dump(self.genre_presets, file)
+
+    def get_genre_presets(self):
+        """
+        Return a dictionary of pre-defined genre presets or load from file if available.
+        """
+        try:
+            with open("genre_presets.pkl", "rb") as file:
+                return pickle.load(file)
+        except (FileNotFoundError, EOFError, pickle.UnpicklingError):
+            return {
+                "Pop": [2, 1, 0, 0, 2, 3, 2, 3, 2, 1],
+                "Rock": [4, 3, 2, 1, 0, 1, 0, -1, -2, -2],
+                "Classical": [0, 0, 1, 1, 2, 3, 2, 3, 2, 1],
+                "Jazz": [2, 3, 2, 1, 1, 2, 1, 1, 1, 0],
+                "Hip-Hop": [6, 4, 2, 1, 0, 2, 3, 4, 2, 1],
+                "Electronic": [6, 4, 3, 2, 0, 2, 4, 6, 5, 3],
+                "Acoustic": [1, 1, 2, 2, 3, 3, 2, 2, 1, 0],
+                "Metal": [5, 4, 3, 1, 1, 1, 0, -1, -2, -3],
+                "Dance": [5, 3, 2, 1, 0, 2, 4, 5, 3, 2],
+                "R&B": [4, 3, 2, 1, 1, 1, 2, 2, 1, 0],
+            }
+    
+    def closeEvent(self, event):
+        """Handle actions on close."""
+        self.save_genre_presets()
+        event.accept()
 
     def save_custom_presets(self):
         """Save custom presets to a file."""
@@ -282,18 +316,25 @@ class EqualizerWindow(QWidget):
 
     def apply_preset_by_name(self, preset_name):
         """
-        Apply a preset by its name and update the dropdown menu.
+        Apply a preset by its name and allow editing.
         """
         if preset_name in self.genre_presets:
             values = self.genre_presets[preset_name]
-            for slider, value in zip(self.sliders, values):
-                slider.setValue(value)
-            # Update the dropdown to match the applied preset
-            self.preset_dropdown.blockSignals(True)  # Prevent triggering signal
-            self.preset_dropdown.setCurrentText(preset_name)
-            self.preset_dropdown.blockSignals(False)
+        elif preset_name in self.custom_presets:
+            values = self.custom_presets[preset_name]
         else:
             QMessageBox.warning(self, "Error", f"No preset found for genre: {preset_name}")
+            return
+
+        # Update sliders
+        for slider, value in zip(self.sliders, values):
+            slider.setValue(value)
+
+        # Update dropdown to match the applied preset
+        self.preset_dropdown.blockSignals(True)
+        self.preset_dropdown.setCurrentText(preset_name)
+        self.preset_dropdown.blockSignals(False)
+
 
 
     def audio_callback(self, in_data, frame_count, time_info, status):
