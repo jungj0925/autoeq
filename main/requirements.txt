@@ -4,3 +4,4 @@ numpy
 spotipy
 python-dotenv
 scipy
+scikit-learn
