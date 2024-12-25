@@ -23,14 +23,16 @@ class SpotifyIntegration:
         with open("./genre/genre_model.pkl", "rb") as file:
             self.genre_model = pickle.load(file)
 
-    def log_in(self):
+        # Automatically log in
+        self.auto_log_in()
+
+    def auto_log_in(self):
+        """Automatically log in using stored token."""
         try:
             self.token = self.spotify_oauth.get_access_token(as_dict=False)
             self.spotify = spotipy.Spotify(auth=self.token)
-            return True
         except Exception as e:
-            print(f"Error during Spotify login: {e}")
-            return False
+            print(f"Error during automatic login: {e}")
 
     def get_current_song(self):
         """Fetch the current song title and artist."""

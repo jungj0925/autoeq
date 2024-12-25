@@ -5,10 +5,21 @@ from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QLabel, QSlider, QPushButton, QHBoxLayout, QGridLayout,
     QLineEdit, QComboBox, QMessageBox, QSystemTrayIcon, QMenu, QAction
 )
+import os
+import sys
 from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtGui import QIcon
 from scipy.signal import sosfilt
 from spotify_integration import SpotifyIntegration
+
+def get_resource_path(relative_path):
+    """
+    Get the absolute path to a resource, works for PyInstaller bundled environments.
+    """
+    if hasattr(sys, "_MEIPASS"):
+        # PyInstaller extracts resources to a temporary folder
+        return os.path.join(sys._MEIPASS, relative_path)
+    return os.path.join(os.path.abspath("."), relative_path)
 
 class EqualizerWindow(QWidget):
     def __init__(self):
@@ -35,7 +46,7 @@ class EqualizerWindow(QWidget):
         self.setLayout(self.main_layout)
 
         # Load and apply styles from QSS file
-        with open("styles.qss", "r") as file:
+        with open(get_resource_path("styles.qss"), "r") as file:
             self.setStyleSheet(file.read())
 
         # Title label
@@ -66,10 +77,6 @@ class EqualizerWindow(QWidget):
         self.now_playing_label.setAlignment(Qt.AlignCenter)
         self.main_layout.addWidget(self.now_playing_label)
 
-        self.spotify_login_button = QPushButton("Log in to Spotify")
-        self.spotify_login_button.clicked.connect(self.spotify_log_in)
-        self.main_layout.addWidget(self.spotify_login_button)
-
         self.song_update_timer = QTimer(self)
         self.song_update_timer.timeout.connect(self.update_now_playing)
         self.song_update_timer.start(1000)
@@ -90,6 +97,7 @@ class EqualizerWindow(QWidget):
             slider.setRange(-12, 12)
             slider.setValue(0)
             slider.setSingleStep(1)
+            slider.setPageStep(1)
             slider.valueChanged.connect(self.update_slider_label)
             self.sliders.append(slider)
             self.sliders_layout.addWidget(slider, 1, i)
@@ -164,13 +172,6 @@ class EqualizerWindow(QWidget):
             device_info = self.p.get_device_info_by_index(i)
             print(f"Index {i}: {device_info['name']}")
         self.start_stream()
-
-    def spotify_log_in(self):
-        """Handle Spotify login process."""
-        if self.spotify.log_in():
-            QMessageBox.information(self, "Spotify Login", "Logged in successfully!")
-        else:
-            QMessageBox.critical(self, "Spotify Login", "Login failed. Please try again.")
 
     def update_preset_dropdown(self):
         """Update the dropdown menu with genre and custom presets."""
@@ -260,7 +261,7 @@ class EqualizerWindow(QWidget):
         """
         Save updated genre presets to a file.
         """
-        with open("presets/genre_presets.pkl", "wb") as file:
+        with open(get_resource_path("presets/genre_presets.pkl"), "wb") as file:
             pickle.dump(self.genre_presets, file)
 
     def get_genre_presets(self):
@@ -268,7 +269,7 @@ class EqualizerWindow(QWidget):
         Return a dictionary of pre-defined genre presets or load from file if available.
         """
         try:
-            with open("presets/genre_presets.pkl", "rb") as file:
+            with open(get_resource_path("presets/genre_presets.pkl"), "rb") as file:
                 return pickle.load(file)
         except (FileNotFoundError, EOFError, pickle.UnpicklingError):
             return {
@@ -332,11 +333,11 @@ class EqualizerWindow(QWidget):
 
     def save_custom_presets(self):
         """Save custom presets to a file."""
-        with open("presets/custom_presets.pkl", "wb") as file:
+        with open(get_resource_path("presets/custom_presets.pkl"), "wb") as file:
             pickle.dump(self.custom_presets, file)
 
     def load_custom_presets(self):
-        with open("presets/custom_presets.pkl", "rb") as file:
+        with open(get_resource_path("presets/custom_presets.pkl"), "rb") as file:
             return pickle.load(file)
 
     def delete_custom_preset(self):
@@ -530,3 +531,4 @@ class EqualizerWindow(QWidget):
 
         # Clip the final output to the int16 range
         return np.clip(processed_audio, -32768, 32767).astype(np.int16)
+
