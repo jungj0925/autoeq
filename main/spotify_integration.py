@@ -1,5 +1,5 @@
 import spotipy
-from spotipy.oauth2 import SpotifyOAuth
+from spotipy.oauth2 import SpotifyOAuth, SpotifyClientCredentials
 import os
 import pickle
 from dotenv import load_dotenv
@@ -14,40 +14,30 @@ class SpotifyIntegration:
             redirect_uri=os.getenv("SPOTIFY_REDIRECT_URI"),
             scope="user-read-currently-playing"
         )
-        self.token_info = None
+        self.token = None
         self.spotify = None
+        self.auth_manager = SpotifyClientCredentials(os.getenv("SPOTIFY_CLIENT_ID"), os.getenv("SPOTIFY_CLIENT_SECRET"))
+        self.sp = spotipy.Spotify(auth_manager=self.auth_manager)
 
         # Load trained genre model
         with open("./genre/genre_model.pkl", "rb") as file:
             self.genre_model = pickle.load(file)
 
     def log_in(self):
-        """Log in to Spotify and initialize the Spotify client."""
         try:
-            self.token_info = self.spotify_oauth.get_access_token(as_dict=True)
-            self.spotify = spotipy.Spotify(auth=self.token_info["access_token"])
+            self.token = self.spotify_oauth.get_access_token(as_dict=False)
+            self.spotify = spotipy.Spotify(auth=self.token)
             return True
         except Exception as e:
             print(f"Error during Spotify login: {e}")
             return False
 
-    def refresh_token(self):
-        """Refresh the access token if expired."""
-        try:
-            if self.spotify_oauth.is_token_expired(self.token_info):
-                print("Refreshing Spotify access token...")
-                self.token_info = self.spotify_oauth.refresh_access_token(self.token_info["refresh_token"])
-                self.spotify = spotipy.Spotify(auth=self.token_info["access_token"])
-                print("Spotify access token refreshed.")
-        except Exception as e:
-            print(f"Error refreshing token: {e}")
-
     def get_current_song(self):
         """Fetch the current song title and artist."""
         if not self.spotify:
+            print("Spotify not initialized")
             return None
         try:
-            self.refresh_token()  # Ensure the token is fresh before making API calls
             current_playback = self.spotify.currently_playing()
             if current_playback and current_playback.get("item"):
                 song_name = current_playback["item"]["name"]
@@ -57,26 +47,30 @@ class SpotifyIntegration:
         except Exception as e:
             print(f"Error fetching current song: {e}")
             return None
-
-    def get_genres_for_song(self):
-        """Fetch genre information for the currently playing song using Spotify API."""
+        
+    def get_genres_for_song(self, artist_name):
+        """
+        Fetch genre information for the currently playing song using Spotify API.
+        """
         if not self.spotify:
             return []
         try:
-            self.refresh_token()  # Ensure the token is fresh before making API calls
-            current_playback = self.spotify.currently_playing()
-            if current_playback and current_playback.get("item"):
-                artist_id = current_playback["item"]["artists"][0]["id"]
-                artist_info = self.spotify.artist(artist_id)
-                genres = artist_info.get("genres", [])
+            # Search for the artist
+            results = self.sp.search(q=artist_name, type='artist', limit=1)
+            if results['artists']['items']:
+                artist = results['artists']['items'][0]
+                artist_name = artist['name']
+                genres = artist['genres']
                 return genres
-            return []
+            else:
+                return "Artist not found."
         except Exception as e:
-            print(f"Error fetching genres: {e}")
-            return []
+            return f"An error occurred: {str(e)}"
 
     def predict_broad_genre(self, sub_genres):
-        """Predict the broad genre using the trained model based on sub-genres."""
+        """
+        Predict the broad genre using the trained model based on sub-genres.
+        """
         if not sub_genres:
             return "Unknown"
         try:

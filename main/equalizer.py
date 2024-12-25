@@ -217,12 +217,15 @@ class EqualizerWindow(QWidget):
             return
 
         song_info = self.spotify.get_current_song()
+        print(song_info)
         if song_info:
-            sub_genres = self.spotify.get_genres_for_song()
+            artist_name = song_info.split(" by ")[1]
+            print(artist_name)
+            sub_genres = self.spotify.get_genres_for_song(artist_name)
+            print(sub_genres)
             if sub_genres:
                 broad_genre = self.spotify.predict_broad_genre(sub_genres)
                 self.now_playing_label.setText(f"Currently streaming: {song_info} ({broad_genre})")
-                
                 # Automatically apply the equalizer preset for the detected genre
                 self.apply_preset_by_name(broad_genre)
             else:
