@@ -20,7 +20,7 @@ class EqualizerWindow(QWidget):
 
         # Initialize presets
         self.default_genre_presets = self.get_default_genre_presets()
-        self.genre_presets = self.get_genre_presets()
+        self.genre_presets = self.load_genre_presets()
         self.custom_presets = self.load_custom_presets()
 
         # Initialize Spotify Integration
@@ -260,7 +260,7 @@ class EqualizerWindow(QWidget):
         """
         Save updated genre presets to a file.
         """
-        with open("genre_presets.pkl", "wb") as file:
+        with open("presets/genre_presets.pkl", "wb") as file:
             pickle.dump(self.genre_presets, file)
 
     def get_genre_presets(self):
@@ -268,7 +268,7 @@ class EqualizerWindow(QWidget):
         Return a dictionary of pre-defined genre presets or load from file if available.
         """
         try:
-            with open("genre_presets.pkl", "rb") as file:
+            with open("presets/genre_presets.pkl", "rb") as file:
                 return pickle.load(file)
         except (FileNotFoundError, EOFError, pickle.UnpicklingError):
             return {
@@ -332,16 +332,12 @@ class EqualizerWindow(QWidget):
 
     def save_custom_presets(self):
         """Save custom presets to a file."""
-        with open("custom_presets.pkl", "wb") as file:
+        with open("presets/custom_presets.pkl", "wb") as file:
             pickle.dump(self.custom_presets, file)
 
     def load_custom_presets(self):
-        """Load custom presets from a file."""
-        try:
-            with open("custom_presets.pkl", "rb") as file:
-                return pickle.load(file)
-        except (FileNotFoundError, EOFError, pickle.UnpicklingError):
-            return {}
+        with open("presets/custom_presets.pkl", "rb") as file:
+            return pickle.load(file)
 
     def delete_custom_preset(self):
         """Delete the selected custom preset."""
