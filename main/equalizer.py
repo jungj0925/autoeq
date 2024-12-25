@@ -8,7 +8,8 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtGui import QIcon, QFont
 from scipy.signal import sosfilt
-from spotify_integration import SpotifyIntegration  # Import Spotify integration
+from spotify_integration import SpotifyIntegration
+
 
 class EqualizerWindow(QWidget):
     def __init__(self):
@@ -16,7 +17,10 @@ class EqualizerWindow(QWidget):
         self.setWindowTitle("Adaptive Audio Equalizer")
         self.setGeometry(100, 100, 700, 600)
         self.equalizer_enabled = True  # Bypass mode flag
-        self.presets = self.load_all_presets()  # Load all existing presets
+
+        # Presets (Genres and Custom)
+        self.genre_presets = self.get_genre_presets()
+        self.custom_presets = self.load_custom_presets()
 
         # Spotify Integration
         self.spotify = SpotifyIntegration()
@@ -41,7 +45,7 @@ class EqualizerWindow(QWidget):
         # Timer to update the "Now Playing" label
         self.song_update_timer = QTimer(self)
         self.song_update_timer.timeout.connect(self.update_now_playing)
-        self.song_update_timer.start(1000)  # Update every 5 seconds
+        self.song_update_timer.start(1000)  # Update every 1 second
 
         # Equalizer sliders layout
         self.sliders_layout = QGridLayout()
@@ -58,7 +62,7 @@ class EqualizerWindow(QWidget):
 
             slider = QSlider(Qt.Vertical)
             slider.setRange(-12, 12)  # Gain range in dB
-            slider.setValue(0)  # Default value
+            slider.setValue(0)  # Default value for Flat EQ
             slider.setPageStep(1)
             slider.setToolTip(f"Adjust {band} Hz gain")
             slider.valueChanged.connect(self.update_slider_label)
@@ -72,13 +76,34 @@ class EqualizerWindow(QWidget):
 
         self.main_layout.addLayout(self.sliders_layout)
 
+        # Presets section
+        self.preset_layout = QHBoxLayout()
+
+        # Preset dropdown
+        self.preset_dropdown = QComboBox()
+        self.update_preset_dropdown()
+        self.preset_dropdown.setCurrentText("Flat")  # Default to Flat
+        self.preset_dropdown.currentTextChanged.connect(self.apply_preset)
+        self.preset_layout.addWidget(self.preset_dropdown)
+
+        # Save custom preset button
+        self.preset_name_input = QLineEdit()
+        self.preset_name_input.setPlaceholderText("Enter custom preset name")
+        self.preset_layout.addWidget(self.preset_name_input)
+
+        save_custom_button = QPushButton("Save Custom")
+        save_custom_button.clicked.connect(self.save_custom_preset)
+        self.preset_layout.addWidget(save_custom_button)
+
+        # Delete custom preset button
+        delete_custom_button = QPushButton("Delete Custom")
+        delete_custom_button.clicked.connect(self.delete_custom_preset)
+        self.preset_layout.addWidget(delete_custom_button)
+
+        self.main_layout.addLayout(self.preset_layout)
+
         # Buttons layout
         buttons_layout = QHBoxLayout()
-
-        # Reset button
-        reset_button = QPushButton("Reset to 0 dB")
-        reset_button.clicked.connect(self.reset_sliders)
-        buttons_layout.addWidget(reset_button)
 
         # Bypass button
         bypass_button = QPushButton("Bypass")
@@ -113,6 +138,47 @@ class EqualizerWindow(QWidget):
 
         self.start_stream()
 
+    def update_preset_dropdown(self):
+        """Update the dropdown menu with genre and custom presets."""
+        self.preset_dropdown.clear()
+        self.preset_dropdown.addItem("Flat")  # Default Flat EQ
+        self.preset_dropdown.addItems(list(self.genre_presets.keys()) + list(self.custom_presets.keys()))
+
+    def apply_preset(self):
+        """Apply the selected preset to the sliders."""
+        preset_name = self.preset_dropdown.currentText()
+        if preset_name == "Flat":
+            values = [0] * len(self.bands)  # Flat preset
+        elif preset_name in self.genre_presets:
+            values = self.genre_presets[preset_name]
+        elif preset_name in self.custom_presets:
+            values = self.custom_presets[preset_name]
+        else:
+            return  # No valid preset selected
+
+        for slider, value in zip(self.sliders, values):
+            slider.setValue(value)
+
+    def reset_sliders(self):
+        """Reset all sliders to 0 dB."""
+        for slider in self.sliders:
+            slider.setValue(0)
+
+    def get_genre_presets(self):
+        """Return a dictionary of pre-defined genre presets."""
+        return {
+            "Pop": [2, 1, 0, 0, 2, 3, 2, 3, 2, 1],
+            "Rock": [4, 3, 2, 1, 0, 1, 0, -1, -2, -2],
+            "Classical": [0, 0, 1, 1, 2, 3, 2, 3, 2, 1],
+            "Jazz": [2, 3, 2, 1, 1, 2, 1, 1, 1, 0],
+            "Hip-Hop": [6, 4, 2, 1, 0, 2, 3, 4, 2, 1],
+            "Electronic": [6, 4, 3, 2, 0, 2, 4, 6, 5, 3],
+            "Acoustic": [1, 1, 2, 2, 3, 3, 2, 2, 1, 0],
+            "Metal": [5, 4, 3, 1, 1, 1, 0, -1, -2, -3],
+            "Dance": [5, 3, 2, 1, 0, 2, 4, 5, 3, 2],
+            "R&B": [4, 3, 2, 1, 1, 1, 2, 2, 1, 0]
+        }
+
     def update_now_playing(self):
         """Fetch and update the 'Now Playing' label."""
         song_info = self.spotify.get_current_song()
@@ -120,6 +186,51 @@ class EqualizerWindow(QWidget):
             self.now_playing_label.setText(f"Currently streaming: {song_info}")
         else:
             self.now_playing_label.setText("Currently streaming: Not Available")
+
+
+    def save_custom_preset(self):
+        """Save current slider settings as a custom preset."""
+        preset_name = self.preset_name_input.text().strip()
+        if not preset_name:
+            QMessageBox.warning(self, "Error", "Preset name cannot be empty.")
+            return
+
+        # Prevent overwriting genre presets
+        if preset_name in self.genre_presets:
+            QMessageBox.warning(self, "Error", "Preset name conflicts with a genre preset.")
+            return
+
+        values = [slider.value() for slider in self.sliders]
+        self.custom_presets[preset_name] = values
+        self.save_custom_presets()
+        self.update_preset_dropdown()
+        QMessageBox.information(self, "Success", f"Custom preset '{preset_name}' saved!")
+
+    def save_custom_presets(self):
+        """Save custom presets to a file."""
+        with open("custom_presets.pkl", "wb") as file:
+            pickle.dump(self.custom_presets, file)
+
+    def load_custom_presets(self):
+        """Load custom presets from a file."""
+        try:
+            with open("custom_presets.pkl", "rb") as file:
+                return pickle.load(file)
+        except (FileNotFoundError, EOFError, pickle.UnpicklingError):
+            return {}
+
+    def delete_custom_preset(self):
+        """Delete the selected custom preset."""
+        preset_name = self.preset_dropdown.currentText()
+        if not preset_name or preset_name in self.genre_presets:
+            QMessageBox.warning(self, "Error", "Cannot delete a genre preset or an invalid preset.")
+            return
+        if preset_name in self.custom_presets:
+            del self.custom_presets[preset_name]
+            self.save_custom_presets()
+            self.update_preset_dropdown()
+            QMessageBox.information(self, "Success", f"Custom preset '{preset_name}' deleted!")
+
 
     def reset_sliders(self):
         """Reset all sliders to 0 dB."""
@@ -130,47 +241,6 @@ class EqualizerWindow(QWidget):
         """Update the labels showing current slider values."""
         for i, slider in enumerate(self.sliders):
             self.slider_labels[i].setText(f"{slider.value()} dB")
-
-    def save_preset(self):
-        """Save current slider settings with a name."""
-        preset_name = self.preset_name_input.text().strip()
-        if not preset_name:
-            QMessageBox.warning(self, "Error", "Preset name cannot be empty.")
-            return
-        preset = [slider.value() for slider in self.sliders]
-        self.presets[preset_name] = preset
-        self.save_all_presets()
-        self.update_preset_dropdown()
-        QMessageBox.information(self, "Success", f"Preset '{preset_name}' saved!")
-
-    def load_preset(self):
-        """Load a preset by name."""
-        preset_name = self.preset_dropdown.currentText()
-        if not preset_name:
-            QMessageBox.warning(self, "Error", "No preset selected.")
-            return
-        preset = self.presets.get(preset_name)
-        if preset is not None:
-            for slider, value in zip(self.sliders, preset):
-                slider.setValue(value)
-            QMessageBox.information(self, "Success", f"Preset '{preset_name}' loaded!")
-
-    def delete_preset(self):
-        """Delete the selected preset."""
-        preset_name = self.preset_dropdown.currentText()
-        if not preset_name:
-            QMessageBox.warning(self, "Error", "No preset selected.")
-            return
-        if preset_name in self.presets:
-            del self.presets[preset_name]
-            self.save_all_presets()
-            self.update_preset_dropdown()
-            QMessageBox.information(self, "Success", f"Preset '{preset_name}' deleted!")
-
-    def update_preset_dropdown(self):
-        """Update the dropdown menu with available presets."""
-        self.preset_dropdown.clear()
-        self.preset_dropdown.addItems(self.presets.keys())
 
     def toggle_bypass(self):
         """Toggle the equalizer bypass mode."""
@@ -202,13 +272,13 @@ class EqualizerWindow(QWidget):
 
         # Convert processed data back to bytes and return
         return (processed_data.tobytes(), pyaudio.paContinue)
-    
+
     def start_stream(self):
         """Initialize audio stream with dynamic output device detection."""
         p = pyaudio.PyAudio()
 
         # Fixed input device index
-        input_device_index = 1
+        input_device_index = 1  # Ensure this is correct for your setup
 
         # Automatically detect output device
         output_device_index = None

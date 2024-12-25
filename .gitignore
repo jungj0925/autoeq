@@ -27,3 +27,5 @@ Cargo.lock
 Thumbs.db
 .env
 .cache
+
+__pycache__/
