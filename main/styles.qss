@@ -1,0 +1,16 @@
+/* styles.qss */
+
+/* Buttons */
+QPushButton {
+    background-color: #3498db;  /* Blue background */
+    color: white;
+    border: none;
+    border-radius: 5px;
+    padding: 10px 20px;  /* More padding for a better touch target */
+    font-size: 14px;
+    transition: background-color 0.3s;  /* Smooth transitions */
+}
+
+QPushButton:hover {
+    background-color: #2980b9;  /* Darker blue on hover */
+}

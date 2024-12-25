@@ -15,7 +15,6 @@ class EqualizerWindow(QWidget):
         super().__init__()
         self.setWindowTitle("Adaptive Audio Equalizer")
         self.setGeometry(100, 100, 900, 700)
-        self.setStyleSheet("background-color: #f7f9fc;")  # Light background
         self.equalizer_enabled = True
         self.auto_eq_enabled = True
 
@@ -34,6 +33,10 @@ class EqualizerWindow(QWidget):
         """Set up the user interface components."""
         self.main_layout = QVBoxLayout()
         self.setLayout(self.main_layout)
+
+        # Load and apply styles from QSS file
+        with open("styles.qss", "r") as file:
+            self.setStyleSheet(file.read())
 
         # Title label
         self.add_title_label("Adaptive Audio Equalizer")
@@ -56,20 +59,14 @@ class EqualizerWindow(QWidget):
     def add_title_label(self, title):
         title_label = QLabel(title)
         title_label.setAlignment(Qt.AlignCenter)
-        title_label.setStyleSheet("font-size: 26px; font-weight: bold; color: #2c3e50;")
         self.main_layout.addWidget(title_label)
 
     def add_now_playing_section(self):
         self.now_playing_label = QLabel("Currently streaming: Not Available")
         self.now_playing_label.setAlignment(Qt.AlignCenter)
-        self.now_playing_label.setFont(QFont("Arial", 14, QFont.Bold))
-        self.now_playing_label.setStyleSheet("color: #34495e; margin: 10px;")
         self.main_layout.addWidget(self.now_playing_label)
 
         self.spotify_login_button = QPushButton("Log in to Spotify")
-        self.spotify_login_button.setStyleSheet(
-            "background-color: #1db954; color: white; font-weight: bold; border-radius: 10px; padding: 8px;"
-        )
         self.spotify_login_button.clicked.connect(self.spotify_log_in)
         self.main_layout.addWidget(self.spotify_login_button)
 
@@ -81,25 +78,24 @@ class EqualizerWindow(QWidget):
         self.sliders_layout = QGridLayout()
         self.sliders = []
         self.slider_labels = []
+        
 
         self.bands = [60, 170, 310, 600, 1000, 3000, 6000, 12000, 14000, 16000]
         for i, band in enumerate(self.bands):
             band_label = QLabel(f"{band} Hz")
             band_label.setAlignment(Qt.AlignCenter)
-            band_label.setStyleSheet("color: #2c3e50; font-weight: bold;")
             self.sliders_layout.addWidget(band_label, 0, i)
 
             slider = QSlider(Qt.Vertical)
             slider.setRange(-12, 12)
             slider.setValue(0)
-            slider.setStyleSheet("QSlider::handle { background-color: #1db954; }")
+            slider.setSingleStep(1)
             slider.valueChanged.connect(self.update_slider_label)
             self.sliders.append(slider)
             self.sliders_layout.addWidget(slider, 1, i)
 
             slider_label = QLabel("0 dB")
             slider_label.setAlignment(Qt.AlignCenter)
-            slider_label.setStyleSheet("color: #34495e; font-size: 12px;")
             self.slider_labels.append(slider_label)
             self.sliders_layout.addWidget(slider_label, 2, i)
 
@@ -110,24 +106,18 @@ class EqualizerWindow(QWidget):
 
         self.preset_dropdown = QComboBox()
         self.update_preset_dropdown()
-        self.preset_dropdown.setStyleSheet(
-            "background-color: white; border: 1px solid #ccc; border-radius: 5px; padding: 4px;"
-        )
         self.preset_dropdown.currentTextChanged.connect(self.apply_preset)
         self.preset_layout.addWidget(self.preset_dropdown)
 
         self.preset_name_input = QLineEdit()
         self.preset_name_input.setPlaceholderText("Enter custom preset name")
-        self.preset_name_input.setStyleSheet("border: 1px solid #ccc; border-radius: 5px; padding: 4px;")
         self.preset_layout.addWidget(self.preset_name_input)
 
         save_button = QPushButton("Save Custom")
-        save_button.setStyleSheet("background-color: #3498db; color: white; border-radius: 10px; padding: 8px;")
         save_button.clicked.connect(self.save_custom_preset)
         self.preset_layout.addWidget(save_button)
 
         delete_button = QPushButton("Delete Custom")
-        delete_button.setStyleSheet("background-color: #e74c3c; color: white; border-radius: 10px; padding: 8px;")
         delete_button.clicked.connect(self.delete_custom_preset)
         self.preset_layout.addWidget(delete_button)
 
@@ -137,17 +127,14 @@ class EqualizerWindow(QWidget):
         buttons_layout = QHBoxLayout()
 
         bypass_button = QPushButton("Bypass")
-        bypass_button.setStyleSheet("background-color: #f39c12; color: white; border-radius: 10px; padding: 8px;")
         bypass_button.clicked.connect(self.toggle_bypass)
         buttons_layout.addWidget(bypass_button)
 
         reset_button = QPushButton("Reset Selected Preset")
-        reset_button.setStyleSheet("background-color: #2980b9; color: white; border-radius: 10px; padding: 8px;")
         reset_button.clicked.connect(self.reset_selected_genre_preset)
         buttons_layout.addWidget(reset_button)
 
         auto_eq_button = QPushButton("Toggle Auto EQ")
-        auto_eq_button.setStyleSheet("background-color: #8e44ad; color: white; border-radius: 10px; padding: 8px;")
         auto_eq_button.clicked.connect(self.toggle_auto_eq)
         buttons_layout.addWidget(auto_eq_button)
 
@@ -213,21 +200,16 @@ class EqualizerWindow(QWidget):
 
     def update_now_playing(self):
         """Fetch and update the 'Now Playing' label with genre detection."""
-        if not self.auto_eq_enabled:
-            return
-
         song_info = self.spotify.get_current_song()
-        print(song_info)
         if song_info:
             artist_name = song_info.split(" by ")[1]
-            print(artist_name)
             sub_genres = self.spotify.get_genres_for_song(artist_name)
-            print(sub_genres)
             if sub_genres:
                 broad_genre = self.spotify.predict_broad_genre(sub_genres)
                 self.now_playing_label.setText(f"Currently streaming: {song_info} ({broad_genre})")
-                # Automatically apply the equalizer preset for the detected genre
-                self.apply_preset_by_name(broad_genre)
+                # Automatically apply the equalizer preset for the detected genre only if Auto EQ is enabled
+                if self.auto_eq_enabled:
+                    self.apply_preset_by_name(broad_genre)
             else:
                 self.now_playing_label.setText(f"Currently streaming: {song_info} (Genre: Unknown)")
         else:

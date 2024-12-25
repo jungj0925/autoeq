@@ -35,7 +35,6 @@ class SpotifyIntegration:
     def get_current_song(self):
         """Fetch the current song title and artist."""
         if not self.spotify:
-            print("Spotify not initialized")
             return None
         try:
             current_playback = self.spotify.currently_playing()
