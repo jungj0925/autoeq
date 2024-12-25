@@ -33,6 +33,11 @@ class EqualizerWindow(QWidget):
         title_label.setAlignment(Qt.AlignCenter)
         title_label.setStyleSheet("font-size: 20px; font-weight: bold;")
         self.main_layout.addWidget(title_label)
+        # Buttons layout
+        buttons_layout = QHBoxLayout()
+
+        # Add buttons layout to the main layout
+        self.main_layout.addLayout(buttons_layout)
 
         # Spotify "Now Playing" section
         self.now_playing_label = QLabel("Currently streaming: Not Available")
@@ -90,6 +95,9 @@ class EqualizerWindow(QWidget):
         self.preset_dropdown.currentTextChanged.connect(self.apply_preset)
         self.preset_layout.addWidget(self.preset_dropdown)
 
+        self.default_genre_presets = self.get_default_genre_presets()
+        self.genre_presets = self.get_genre_presets()  # Load from file or defaults
+
         # Save custom preset button
         self.preset_name_input = QLineEdit()
         self.preset_name_input.setPlaceholderText("Enter custom preset name")
@@ -113,6 +121,12 @@ class EqualizerWindow(QWidget):
         bypass_button = QPushButton("Bypass")
         bypass_button.clicked.connect(self.toggle_bypass)
         buttons_layout.addWidget(bypass_button)
+
+        # Reset selected preset button
+        reset_selected_button = QPushButton("Reset Selected Preset")
+        reset_selected_button.setToolTip("Revert the selected genre preset to its original default value")
+        reset_selected_button.clicked.connect(self.reset_selected_genre_preset)
+        buttons_layout.addWidget(reset_selected_button)
 
         self.main_layout.addLayout(buttons_layout)
 
@@ -270,6 +284,47 @@ class EqualizerWindow(QWidget):
                 "Dance": [5, 3, 2, 1, 0, 2, 4, 5, 3, 2],
                 "R&B": [4, 3, 2, 1, 1, 1, 2, 2, 1, 0],
             }
+        
+    def get_default_genre_presets(self):
+        """Return the original default genre presets."""
+        return {
+            "Pop": [2, 1, 0, 0, 2, 3, 2, 3, 2, 1],
+            "Rock": [4, 3, 2, 1, 0, 1, 0, -1, -2, -2],
+            "Classical": [0, 0, 1, 1, 2, 3, 2, 3, 2, 1],
+            "Jazz": [2, 3, 2, 1, 1, 2, 1, 1, 1, 0],
+            "Hip-Hop": [6, 4, 2, 1, 0, 2, 3, 4, 2, 1],
+            "Electronic": [6, 4, 3, 2, 0, 2, 4, 6, 5, 3],
+            "Acoustic": [1, 1, 2, 2, 3, 3, 2, 2, 1, 0],
+            "Metal": [5, 4, 3, 1, 1, 1, 0, -1, -2, -3],
+            "Dance": [5, 3, 2, 1, 0, 2, 4, 5, 3, 2],
+            "R&B": [4, 3, 2, 1, 1, 1, 2, 2, 1, 0],
+        }
+
+    def reset_selected_genre_preset(self):
+        """
+        Reset the selected genre preset to its original default value.
+        """
+        selected_preset = self.preset_dropdown.currentText()
+
+        if selected_preset not in self.default_genre_presets:
+            QMessageBox.warning(
+                self, 
+                "Error", 
+                f"'{selected_preset}' is not a genre preset or does not have a default value."
+            )
+            return
+
+        # Reset the selected preset
+        self.genre_presets[selected_preset] = self.default_genre_presets[selected_preset]
+        self.save_genre_presets()  # Save updated presets
+        self.apply_preset_by_name(selected_preset)  # Apply the reset preset to sliders
+        QMessageBox.information(
+            self, 
+            "Success", 
+            f"'{selected_preset}' has been reset to its default value."
+        )
+
+
     
     def closeEvent(self, event):
         """Handle actions on close."""
@@ -316,24 +371,23 @@ class EqualizerWindow(QWidget):
 
     def apply_preset_by_name(self, preset_name):
         """
-        Apply a preset by its name and allow editing.
+        Apply a preset by its name and update sliders and dropdown menu.
         """
         if preset_name in self.genre_presets:
             values = self.genre_presets[preset_name]
         elif preset_name in self.custom_presets:
             values = self.custom_presets[preset_name]
         else:
-            QMessageBox.warning(self, "Error", f"No preset found for genre: {preset_name}")
+            QMessageBox.warning(self, "Error", f"No preset found for: {preset_name}")
             return
 
-        # Update sliders
         for slider, value in zip(self.sliders, values):
             slider.setValue(value)
 
-        # Update dropdown to match the applied preset
         self.preset_dropdown.blockSignals(True)
         self.preset_dropdown.setCurrentText(preset_name)
         self.preset_dropdown.blockSignals(False)
+
 
 
 
