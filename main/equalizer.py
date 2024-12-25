@@ -5,30 +5,45 @@ from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QLabel, QSlider, QPushButton, QHBoxLayout, QGridLayout,
     QLineEdit, QComboBox, QMessageBox, QSystemTrayIcon, QMenu, QAction
 )
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QIcon
+from PyQt5.QtCore import Qt, QTimer
+from PyQt5.QtGui import QIcon, QFont
 from scipy.signal import sosfilt
-
+from spotify_integration import SpotifyIntegration  # Import Spotify integration
 
 class EqualizerWindow(QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Adaptive Audio Equalizer")
-        self.setGeometry(100, 100, 700, 500)
+        self.setGeometry(100, 100, 700, 600)
         self.equalizer_enabled = True  # Bypass mode flag
         self.presets = self.load_all_presets()  # Load all existing presets
+
+        # Spotify Integration
+        self.spotify = SpotifyIntegration()
 
         # Main layout
         self.main_layout = QVBoxLayout()
         self.setLayout(self.main_layout)
 
         # Title label
-        title_label = QLabel("10-Band Audio Equalizer")
+        title_label = QLabel("Adaptive Audio Equalizer")
         title_label.setAlignment(Qt.AlignCenter)
-        title_label.setStyleSheet("font-size: 18px; font-weight: bold;")
+        title_label.setStyleSheet("font-size: 20px; font-weight: bold;")
         self.main_layout.addWidget(title_label)
 
-        # Sliders layout
+        # Spotify "Now Playing" section
+        self.now_playing_label = QLabel("Currently streaming: Not Available")
+        self.now_playing_label.setAlignment(Qt.AlignCenter)
+        self.now_playing_label.setFont(QFont("Arial", 14, QFont.Bold))
+        self.now_playing_label.setStyleSheet("color: #2c3e50; margin: 10px;")
+        self.main_layout.addWidget(self.now_playing_label)
+
+        # Timer to update the "Now Playing" label
+        self.song_update_timer = QTimer(self)
+        self.song_update_timer.timeout.connect(self.update_now_playing)
+        self.song_update_timer.start(1000)  # Update every 5 seconds
+
+        # Equalizer sliders layout
         self.sliders_layout = QGridLayout()
         self.sliders = []
         self.slider_labels = []
@@ -37,12 +52,10 @@ class EqualizerWindow(QWidget):
         self.bands = [60, 170, 310, 600, 1000, 3000, 6000, 12000, 14000, 16000]
 
         for i, band in enumerate(self.bands):
-            # Band label
             band_label = QLabel(f"{band} Hz")
             band_label.setAlignment(Qt.AlignCenter)
             self.sliders_layout.addWidget(band_label, 0, i)
 
-            # Slider
             slider = QSlider(Qt.Vertical)
             slider.setRange(-12, 12)  # Gain range in dB
             slider.setValue(0)  # Default value
@@ -52,43 +65,12 @@ class EqualizerWindow(QWidget):
             self.sliders.append(slider)
             self.sliders_layout.addWidget(slider, 1, i)
 
-            # Current gain label
             slider_label = QLabel("0 dB")
             slider_label.setAlignment(Qt.AlignCenter)
             self.slider_labels.append(slider_label)
             self.sliders_layout.addWidget(slider_label, 2, i)
 
         self.main_layout.addLayout(self.sliders_layout)
-
-        # Presets section
-        self.preset_layout = QHBoxLayout()
-
-        # Preset name input
-        self.preset_name_input = QLineEdit()
-        self.preset_name_input.setPlaceholderText("Enter preset name")
-        self.preset_layout.addWidget(self.preset_name_input)
-
-        # Save preset button
-        save_button = QPushButton("Save Preset")
-        save_button.clicked.connect(self.save_preset)
-        self.preset_layout.addWidget(save_button)
-
-        # Load preset dropdown
-        self.preset_dropdown = QComboBox()
-        self.update_preset_dropdown()
-        self.preset_layout.addWidget(self.preset_dropdown)
-
-        # Load preset button
-        load_button = QPushButton("Load Preset")
-        load_button.clicked.connect(self.load_preset)
-        self.preset_layout.addWidget(load_button)
-
-        # Delete preset button
-        delete_button = QPushButton("Delete Preset")
-        delete_button.clicked.connect(self.delete_preset)
-        self.preset_layout.addWidget(delete_button)
-
-        self.main_layout.addLayout(self.preset_layout)
 
         # Buttons layout
         buttons_layout = QHBoxLayout()
@@ -130,6 +112,14 @@ class EqualizerWindow(QWidget):
             print(f"Index {i}: {device_info['name']}")
 
         self.start_stream()
+
+    def update_now_playing(self):
+        """Fetch and update the 'Now Playing' label."""
+        song_info = self.spotify.get_current_song()
+        if song_info:
+            self.now_playing_label.setText(f"Currently streaming: {song_info}")
+        else:
+            self.now_playing_label.setText("Currently streaming: Not Available")
 
     def reset_sliders(self):
         """Reset all sliders to 0 dB."""
@@ -181,19 +171,6 @@ class EqualizerWindow(QWidget):
         """Update the dropdown menu with available presets."""
         self.preset_dropdown.clear()
         self.preset_dropdown.addItems(self.presets.keys())
-
-    def save_all_presets(self):
-        """Save all presets to file."""
-        with open("presets.pkl", "wb") as file:
-            pickle.dump(self.presets, file)
-
-    def load_all_presets(self):
-        """Load all presets from file."""
-        try:
-            with open("presets.pkl", "rb") as file:
-                return pickle.load(file)
-        except FileNotFoundError:
-            return {}
 
     def toggle_bypass(self):
         """Toggle the equalizer bypass mode."""
