@@ -114,9 +114,6 @@ autoeq/
 - Ensure your Spotify account is logged in via the app's authentication process.
 - The "Currently streaming" section displays the current track.
 
-### System Tray
-- Use the tray icon to toggle the equalizer or quit the app.
-
 ---
 
 ## Troubleshooting
