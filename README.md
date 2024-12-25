@@ -1,22 +1,22 @@
-
 # Adaptive Audio Equalizer
 
-Adaptive Audio Equalizer is an innovative application designed to enhance the listening experience across all audio sources on your computer. It provides a customizable 10-band graphic equalizer, includes genre-specific presets, and integrates with Spotify to display the currently playing track.
+Adaptive Audio Equalizer is an innovative application designed to enhance the listening experience across all audio sources on your computer. It provides a customizable 10-band graphic equalizer, includes genre-specific presets, integrates with Spotify to display the currently playing track, and enables automatic genre-based equalizer adjustments.
 
 ---
 
 ## Features
 
 ### Equalizer Features
-- 10-Band Equalizer: Adjust frequencies ranging from 60 Hz to 16,000 Hz.
-- Custom Presets: Create, save, and load personalized EQ settings.
-- Built-in Genre Presets: Includes presets for genres like Pop, Rock, Classical, and more.
-- Real-Time Adjustment: Applies equalizer settings to system-wide audio with low latency.
-- Flat Mode: Reset all bands to 0 dB using the "Flat" preset.
+- **10-Band Equalizer**: Adjust frequencies ranging from 60 Hz to 16,000 Hz.
+- **Custom Presets**: Create, save, and load personalized EQ settings.
+- **Built-in Genre Presets**: Includes presets for genres like Pop, Rock, Classical, and more.
+- **Real-Time Adjustment**: Applies equalizer settings to system-wide audio with low latency.
+- **Flat Mode**: Reset all bands to 0 dB using the "Flat" preset.
 
 ### Spotify Integration
-- "Now Playing" Display: Displays the currently playing track in real time.
-- Automatic Updates: Updates every second to show the latest song from your Spotify account.
+- **"Now Playing" Display**: Displays the currently playing track in real time.
+- **Automatic Updates**: Updates every second to show the latest song from your Spotify account.
+- **Genre Detection**: Detects the genre of the currently playing track and automatically adjusts the EQ based on pre-trained machine learning models.
 
 ---
 
@@ -30,28 +30,43 @@ Adaptive Audio Equalizer is an innovative application designed to enhance the li
   - scipy
   - spotipy
   - python-dotenv
+  - scikit-learn
+
+### Hardware Requirement
+- **Virtual Audio Cable**:
+  - Required to route audio for processing by the application.
+  - Install and configure a virtual audio cable of your choice (e.g., VB-CABLE).
 
 ### Steps
-1. Clone the repository:
-   ```
+
+1. **Clone the repository**:
+   ```bash
    git clone https://github.com/yourusername/adaptive-audio-equalizer.git
    cd adaptive-audio-equalizer
    ```
 
-2. Install dependencies:
-   ```
+2. **Install dependencies**:
+   ```bash
    pip install -r requirements.txt
    ```
 
-3. Create a `.env` file in the `main/` directory with your Spotify API credentials:
-   ```
-   SPOTIFY_CLIENT_ID=your_client_id
-   SPOTIFY_CLIENT_SECRET=your_client_secret
-   SPOTIFY_REDIRECT_URI=http://localhost:8888/callback
-   ```
+3. **Configure Spotify API**:
+   - Create a Spotify app at [Spotify Developer Dashboard](https://developer.spotify.com/dashboard/applications).
+   - Note the **Client ID**, **Client Secret**, and **Redirect URI**.
+   - Create a `.env` file in the `main/` directory with the following content:
+     ```env
+     SPOTIFY_CLIENT_ID=your_client_id
+     SPOTIFY_CLIENT_SECRET=your_client_secret
+     SPOTIFY_REDIRECT_URI=http://localhost:8888/callback
+     ```
 
-4. Run the application:
-   ```
+4. **Set up virtual audio devices**:
+   - Run the application to list available audio devices.
+   - Note the input and output device indices from the terminal output.
+   - Update `input_device_index` and `output_device_index` in `start_stream()` in `equalizer.py`.
+
+5. **Run the application**:
+   ```bash
    python main.py
    ```
 
@@ -69,9 +84,9 @@ autoeq/
 │   ├── .cache                   # Spotify API cache
 │   ├── .env                     # Environment variables for Spotify API
 │   ├── custom_presets.pkl       # Saved custom EQ presets
+│   ├── genre_model.pkl          # Pre-trained genre classification model
 │   ├── equalizer.py             # Main equalizer logic and UI
 │   ├── main.py                  # Entry point of the application
-│   ├── preset.eq                # Preset configuration file (if applicable)
 │   ├── requirements.txt         # Python dependencies
 │   ├── spotify_integration.py   # Spotify integration logic
 │
@@ -111,8 +126,9 @@ autoeq/
 4. Delete custom presets by selecting the preset and clicking "Delete Custom."
 
 ### Spotify Integration
-- Ensure your Spotify account is logged in via the app's authentication process.
-- The "Currently streaming" section displays the current track.
+- Log in to Spotify using the "Log in to Spotify" button.
+- The "Currently streaming" section displays the current track and genre.
+- If Auto EQ is enabled, the EQ will automatically adjust based on the detected genre.
 
 ---
 
