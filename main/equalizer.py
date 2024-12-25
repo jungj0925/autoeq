@@ -15,65 +15,78 @@ class EqualizerWindow(QWidget):
         super().__init__()
         self.setWindowTitle("Adaptive Audio Equalizer")
         self.setGeometry(100, 100, 700, 600)
-        self.equalizer_enabled = True  # Bypass mode flag
+        self.equalizer_enabled = True
+        self.auto_eq_enabled = True
 
-        # Presets (Genres and Custom)
+        # Initialize presets
+        self.default_genre_presets = self.get_default_genre_presets()
         self.genre_presets = self.get_genre_presets()
         self.custom_presets = self.load_custom_presets()
 
-        # Spotify Integration
+        # Initialize Spotify Integration
         self.spotify = SpotifyIntegration()
 
-        # Main layout
+        self.init_ui()
+        self.init_audio()
+
+    def init_ui(self):
+        """Set up the user interface components."""
         self.main_layout = QVBoxLayout()
         self.setLayout(self.main_layout)
 
         # Title label
-        title_label = QLabel("Adaptive Audio Equalizer")
+        self.add_title_label("Adaptive Audio Equalizer")
+
+        # Spotify "Now Playing" Section
+        self.add_now_playing_section()
+
+        # Equalizer Sliders
+        self.add_sliders()
+
+        # Preset Controls
+        self.add_preset_controls()
+
+        # Additional Controls
+        self.add_buttons()
+
+        # System Tray Integration
+        self.setup_tray_icon()
+
+    def add_title_label(self, title):
+        title_label = QLabel(title)
         title_label.setAlignment(Qt.AlignCenter)
         title_label.setStyleSheet("font-size: 20px; font-weight: bold;")
         self.main_layout.addWidget(title_label)
-        # Buttons layout
-        buttons_layout = QHBoxLayout()
 
-        # Add buttons layout to the main layout
-        self.main_layout.addLayout(buttons_layout)
-
-        # Spotify "Now Playing" section
+    def add_now_playing_section(self):
         self.now_playing_label = QLabel("Currently streaming: Not Available")
         self.now_playing_label.setAlignment(Qt.AlignCenter)
         self.now_playing_label.setFont(QFont("Arial", 14, QFont.Bold))
         self.now_playing_label.setStyleSheet("color: #2c3e50; margin: 10px;")
         self.main_layout.addWidget(self.now_playing_label)
 
-        # Spotify Login Button
         self.spotify_login_button = QPushButton("Log in to Spotify")
         self.spotify_login_button.clicked.connect(self.spotify_log_in)
         self.main_layout.addWidget(self.spotify_login_button)
 
-        # Timer to update the "Now Playing" label
         self.song_update_timer = QTimer(self)
         self.song_update_timer.timeout.connect(self.update_now_playing)
-        self.song_update_timer.start(1000)  # Update every 1 second
+        self.song_update_timer.start(1000)
 
-        # Equalizer sliders layout
+    def add_sliders(self):
         self.sliders_layout = QGridLayout()
         self.sliders = []
         self.slider_labels = []
 
-        # Frequency bands
         self.bands = [60, 170, 310, 600, 1000, 3000, 6000, 12000, 14000, 16000]
-
         for i, band in enumerate(self.bands):
             band_label = QLabel(f"{band} Hz")
             band_label.setAlignment(Qt.AlignCenter)
             self.sliders_layout.addWidget(band_label, 0, i)
 
             slider = QSlider(Qt.Vertical)
-            slider.setRange(-12, 12)  # Gain range in dB
-            slider.setValue(0)  # Default value for Flat EQ
-            slider.setPageStep(1)
-            slider.setToolTip(f"Adjust {band} Hz gain")
+            slider.setRange(-12, 12)
+            slider.setValue(0)
             slider.valueChanged.connect(self.update_slider_label)
             self.sliders.append(slider)
             self.sliders_layout.addWidget(slider, 1, i)
@@ -85,52 +98,46 @@ class EqualizerWindow(QWidget):
 
         self.main_layout.addLayout(self.sliders_layout)
 
-        # Presets section
+    def add_preset_controls(self):
         self.preset_layout = QHBoxLayout()
 
-        # Preset dropdown
         self.preset_dropdown = QComboBox()
         self.update_preset_dropdown()
-        self.preset_dropdown.setCurrentText("Flat")  # Default to Flat
         self.preset_dropdown.currentTextChanged.connect(self.apply_preset)
         self.preset_layout.addWidget(self.preset_dropdown)
 
-        self.default_genre_presets = self.get_default_genre_presets()
-        self.genre_presets = self.get_genre_presets()  # Load from file or defaults
-
-        # Save custom preset button
         self.preset_name_input = QLineEdit()
         self.preset_name_input.setPlaceholderText("Enter custom preset name")
         self.preset_layout.addWidget(self.preset_name_input)
 
-        save_custom_button = QPushButton("Save Custom")
-        save_custom_button.clicked.connect(self.save_custom_preset)
-        self.preset_layout.addWidget(save_custom_button)
+        save_button = QPushButton("Save Custom")
+        save_button.clicked.connect(self.save_custom_preset)
+        self.preset_layout.addWidget(save_button)
 
-        # Delete custom preset button
-        delete_custom_button = QPushButton("Delete Custom")
-        delete_custom_button.clicked.connect(self.delete_custom_preset)
-        self.preset_layout.addWidget(delete_custom_button)
+        delete_button = QPushButton("Delete Custom")
+        delete_button.clicked.connect(self.delete_custom_preset)
+        self.preset_layout.addWidget(delete_button)
 
         self.main_layout.addLayout(self.preset_layout)
 
-        # Buttons layout
+    def add_buttons(self):
         buttons_layout = QHBoxLayout()
 
-        # Bypass button
         bypass_button = QPushButton("Bypass")
         bypass_button.clicked.connect(self.toggle_bypass)
         buttons_layout.addWidget(bypass_button)
 
-        # Reset selected preset button
-        reset_selected_button = QPushButton("Reset Selected Preset")
-        reset_selected_button.setToolTip("Revert the selected genre preset to its original default value")
-        reset_selected_button.clicked.connect(self.reset_selected_genre_preset)
-        buttons_layout.addWidget(reset_selected_button)
+        reset_button = QPushButton("Reset Selected Preset")
+        reset_button.clicked.connect(self.reset_selected_genre_preset)
+        buttons_layout.addWidget(reset_button)
+
+        auto_eq_button = QPushButton("Toggle Auto EQ")
+        auto_eq_button.clicked.connect(self.toggle_auto_eq)
+        buttons_layout.addWidget(auto_eq_button)
 
         self.main_layout.addLayout(buttons_layout)
 
-        # System tray integration
+    def setup_tray_icon(self):
         self.tray_icon = QSystemTrayIcon(QIcon("icon.png"), self)
         self.tray_icon.setToolTip("Adaptive Audio Equalizer")
         tray_menu = QMenu()
@@ -146,22 +153,13 @@ class EqualizerWindow(QWidget):
         self.tray_icon.setContextMenu(tray_menu)
         self.tray_icon.show()
 
-        self.auto_eq_enabled = True  # Default to Auto EQ enabled
-
-        # Auto EQ toggle button
-        auto_eq_button = QPushButton("Toggle Auto EQ")
-        auto_eq_button.setToolTip("Enable or disable automatic genre-based equalizer adjustment")
-        auto_eq_button.clicked.connect(self.toggle_auto_eq)
-        buttons_layout.addWidget(auto_eq_button)
-
-        # Initialize PyAudio
+    def init_audio(self):
+        """Initialize the audio stream."""
         self.p = pyaudio.PyAudio()
-
         print("Available Audio Devices:")
         for i in range(self.p.get_device_count()):
             device_info = self.p.get_device_info_by_index(i)
             print(f"Index {i}: {device_info['name']}")
-
         self.start_stream()
 
     def spotify_log_in(self):
