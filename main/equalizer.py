@@ -6,7 +6,7 @@ from PyQt5.QtWidgets import (
     QLineEdit, QComboBox, QMessageBox, QSystemTrayIcon, QMenu, QAction
 )
 from PyQt5.QtCore import Qt, QTimer
-from PyQt5.QtGui import QIcon, QFont
+from PyQt5.QtGui import QIcon
 from scipy.signal import sosfilt
 from spotify_integration import SpotifyIntegration
 
