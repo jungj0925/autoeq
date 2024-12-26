@@ -34,6 +34,24 @@ Here are some images showing the different genres available in the AutoEQ:
 - **Genre Detection**: Detects the genre of the currently playing track and automatically adjusts the EQ based on pre-trained machine learning models.
 - **Genre Assignment**: Assign specific genres to artists, allowing for management of "Unknown" genres and correction of mislabeled ones.
 
+
+---
+
+## Built-In Genre Presets
+
+| Genre         | 60 Hz | 170 Hz | 310 Hz | 600 Hz | 1 kHz | 3 kHz | 6 kHz | 12 kHz | 14 kHz | 16 kHz |
+|---------------|-------|--------|--------|--------|-------|-------|-------|--------|--------|--------|
+| **Pop**       | +2    | +1     | 0      | 0      | +2    | +3    | +2    | +3     | +2     | +1     |
+| **Rock**      | +4    | +3     | +2     | +1     | 0     | +1    | 0     | -1     | -2     | -2     |
+| **Classical** | 0     | 0      | +1     | +1     | +2    | +3    | +2    | +3     | +2     | +1     |
+| **Jazz**      | +2    | +3     | +2     | +1     | +1    | +2    | +1    | +1     | +1     | 0      |
+| **Hip-Hop**   | +6    | +4     | +2     | +1     | 0     | +2    | +3    | +4     | +2     | +1     |
+| **Electronic**| +6    | +4     | +3     | +2     | 0     | +2    | +4    | +6     | +5     | +3     |
+| **Acoustic**  | +1    | +1     | +2     | +2     | +3    | +3    | +2    | +2     | +1     | 0      |
+| **Metal**     | +5    | +4     | +3     | +1     | +1    | +1    | 0     | -1     | -2     | -3     |
+| **Dance**     | +5    | +3     | +2     | +1     | 0     | +2    | +4    | +5     | +3     | +2     |
+| **R&B**       | +4    | +3     | +2     | +1     | +1    | +1    | +2    | +2     | +1     | 0      |
+
 ---
 
 ## Installation
@@ -110,23 +128,6 @@ autoeq/
 ├── .gitignore                   # Ignored files for Git
 ├── README.md                    # Project documentation
 ```
-
----
-
-## Built-In Genre Presets
-
-| Genre         | 60 Hz | 170 Hz | 310 Hz | 600 Hz | 1 kHz | 3 kHz | 6 kHz | 12 kHz | 14 kHz | 16 kHz |
-|---------------|-------|--------|--------|--------|-------|-------|-------|--------|--------|--------|
-| **Pop**       | +2    | +1     | 0      | 0      | +2    | +3    | +2    | +3     | +2     | +1     |
-| **Rock**      | +4    | +3     | +2     | +1     | 0     | +1    | 0     | -1     | -2     | -2     |
-| **Classical** | 0     | 0      | +1     | +1     | +2    | +3    | +2    | +3     | +2     | +1     |
-| **Jazz**      | +2    | +3     | +2     | +1     | +1    | +2    | +1    | +1     | +1     | 0      |
-| **Hip-Hop**   | +6    | +4     | +2     | +1     | 0     | +2    | +3    | +4     | +2     | +1     |
-| **Electronic**| +6    | +4     | +3     | +2     | 0     | +2    | +4    | +6     | +5     | +3     |
-| **Acoustic**  | +1    | +1     | +2     | +2     | +3    | +3    | +2    | +2     | +1     | 0      |
-| **Metal**     | +5    | +4     | +3     | +1     | +1    | +1    | 0     | -1     | -2     | -3     |
-| **Dance**     | +5    | +3     | +2     | +1     | 0     | +2    | +4    | +5     | +3     | +2     |
-| **R&B**       | +4    | +3     | +2     | +1     | +1    | +1    | +2    | +2     | +1     | 0      |
 
 ---
 
