@@ -1,7 +1,32 @@
-# Adaptive Audio Equalizer
+# AutoEQ
 
-Adaptive Audio Equalizer is an innovative application designed to enhance the listening experience across all audio sources on your computer. It provides a customizable 10-band graphic equalizer, includes genre-specific presets, integrates with Spotify to display the currently playing track, and enables automatic genre-based equalizer adjustments.
+AutoEQ is an innovative application designed to enhance the listening experience across all audio sources on your computer. It provides a customizable 10-band graphic equalizer, includes genre-specific presets, integrates with Spotify to display the currently playing track, and enables automatic genre-based equalizer adjustments.
 
+Here are some images showing the different genres available in the AutoEQ:
+
+<div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
+
+    <div style="text-align: center;">
+        <img src="images/hiphop.png" alt="Hip-Hop" width="200" />
+        <p>Hip-Hop</p>
+    </div>
+
+    <div style="text-align: center;">
+        <img src="images/rnb.png" alt="R&B" width="200" />
+        <p>R&B</p>
+    </div>
+
+    <div style="text-align: center;">
+        <img src="images/pop.png" alt="Pop" width="200" />
+        <p>Pop</p>
+    </div>
+
+    <div style="text-align: center;">
+        <img src="images/rock.png" alt="Rock" width="200" />
+        <p>Rock</p>
+    </div>
+
+</div>
 ---
 
 ## Features
