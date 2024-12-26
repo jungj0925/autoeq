@@ -151,10 +151,10 @@ class EqualizerWindow(QWidget):
         self.auto_eq_button.clicked.connect(self.toggle_auto_eq)
         buttons_layout.addWidget(self.auto_eq_button)
 
-        # Add a button to refresh Spotify login
-        refresh_login_button = QPushButton("Refresh Spotify Login")
-        refresh_login_button.clicked.connect(self.refresh_spotify_login)
-        buttons_layout.addWidget(refresh_login_button)
+        # # Add a button to refresh Spotify login
+        # refresh_login_button = QPushButton("Refresh Spotify Login")
+        # refresh_login_button.clicked.connect(self.refresh_spotify_login)
+        # buttons_layout.addWidget(refresh_login_button)
 
         self.main_layout.addLayout(buttons_layout)
 
@@ -601,10 +601,10 @@ class EqualizerWindow(QWidget):
         # Clip the final output to the int16 range
         return np.clip(processed_audio, -32768, 32767).astype(np.int16)
 
-    def refresh_spotify_login(self):
-        """Refresh the Spotify login."""
-        self.spotify.refresh_login()
-        QMessageBox.information(self, "Refresh Login", "Spotify login refreshed successfully.")
+    # def refresh_spotify_login(self):
+    #     """Refresh the Spotify login."""
+    #     self.spotify.refresh_login()
+    #     QMessageBox.information(self, "Refresh Login", "Spotify login refreshed successfully.")
 
     def load_artist_genres(self):
         """Load the artist-genre mapping from a file."""
