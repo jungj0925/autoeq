@@ -39,7 +39,7 @@ def get_resource_path(relative_path):
 class EqualizerWindow(QWidget):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Adaptive Audio Equalizer")
+        self.setWindowTitle("AutoEQ")
         self.setGeometry(100, 100, 900, 700)
         self.equalizer_enabled = True
         self.auto_eq_enabled = True
@@ -66,7 +66,7 @@ class EqualizerWindow(QWidget):
         self.setStyleSheet(STYLE_SHEET)
 
         # Title label
-        self.add_title_label("Adaptive Audio Equalizer")
+        self.add_title_label("AutoEQ")
 
         # Spotify "Now Playing" Section
         self.add_now_playing_section()
