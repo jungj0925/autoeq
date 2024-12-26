@@ -104,25 +104,41 @@ Here are some images showing the different genres available in the AutoEQ:
    python main.py
    ```
 
----
+### File Structure
 
-## File Structure
+Here’s the structure of the AutoEQ project:
 
 ```
 autoeq/
 │
 ├── archive/                     # Archived/old files
 │
+├── images/                      # Folder for images
+│   ├── full.png                 # Full application screenshot
+│   ├── hiphop.png               # Hip-Hop genre image
+│   ├── pop.png                  # Pop genre image
+│   ├── rnb.png                  # R&B genre image
+│   └── rock.png                 # Rock genre image
+│
 ├── main/                        # Main application directory
 │   ├── __pycache__/             # Python cache files
-│   ├── .cache                   # Spotify API cache
+│   ├── build                    # Build files for PyInstaller
+│   ├── dist                     # Distribution files for PyInstaller
+│   ├── genre/                   # Genre detection files
+│   │   ├── dataset.json         # Dataset for genre detection
+│   │   ├── genre_detection.py    # Genre detection logic
+│   │   └── genre_model.pkl       # Pre-trained genre classification model
+│   ├── presets/                 # Presets directory
+│   │   ├── custom_presets.pkl    # Saved custom EQ presets
+│   │   ├── genre_presets.pkl     # Pre-defined genre classification presets
 │   ├── .env                     # Environment variables for Spotify API
-│   ├── custom_presets.pkl       # Saved custom EQ presets
-│   ├── genre_model.pkl          # Pre-trained genre classification model
+│   ├── artist_genres.pkl        # Artist-genre mapping
 │   ├── equalizer.py             # Main equalizer logic and UI
 │   ├── main.py                  # Entry point of the application
 │   ├── requirements.txt         # Python dependencies
 │   ├── spotify_integration.py   # Spotify integration logic
+│   ├── styles.qss               # Styles for the application
+│   ├── icon.jpg                 # Application icon
 │
 ├── .gitattributes               # Git attributes file
 ├── .gitignore                   # Ignored files for Git
@@ -142,8 +158,17 @@ autoeq/
    - Click "Save Custom."
 4. Delete custom presets by selecting the preset and clicking "Delete Custom."
 
+### Assigning Genres to Artists
+1. **Enter Artist Name**: In the "Assign Genre" section, enter the name of the artist you want to assign a genre to.
+2. **Select Genre**: Choose the desired genre from the dropdown menu.
+3. **Assign Genre**: Click the "Assign Genre" button to save the assignment.
+
+### Resetting Genre Assignments
+1. **Enter Artist Name**: In the "Assign Genre" section, enter the name of the artist whose genre you want to reset.
+2. **Click Reset Genre**: Click the "Reset Genre" button to remove the genre assignment for that artist.
+
 ### Spotify Integration
-- Log in to Spotify using the "Log in to Spotify" button.
+- Update credentials in `.env` file. Refer to installation section.
 - The "Currently streaming" section displays the current track and genre.
 - If Auto EQ is enabled, the EQ will automatically adjust based on the detected genre.
 
