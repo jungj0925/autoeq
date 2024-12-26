@@ -47,7 +47,6 @@ pip-wheel-metadata/
 *.pkl
 
 # Generated assets and logs
-*.png
 *.log
 
 # Spotify-specific
