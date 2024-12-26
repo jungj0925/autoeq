@@ -12,6 +12,21 @@ from PyQt5.QtGui import QIcon
 from scipy.signal import sosfilt
 from spotify_integration import SpotifyIntegration
 
+STYLE_SHEET = """
+QPushButton {
+    background-color: #3498db;  /* Blue background */
+    color: white;
+    border: none;
+    border-radius: 5px;
+    padding: 5px 20px;  /* More padding for a better touch target */
+    font-size: 12px;
+}
+
+QPushButton:hover {
+    background-color: #2980b9;  /* Darker blue on hover */
+}
+"""
+
 def get_resource_path(relative_path):
     """
     Get the absolute path to a resource, works for PyInstaller bundled environments.
@@ -47,8 +62,8 @@ class EqualizerWindow(QWidget):
         self.setLayout(self.main_layout)
 
         # Load and apply styles from QSS file
-        with open(get_resource_path("styles.qss"), "r") as file:
-            self.setStyleSheet(file.read())
+        
+        self.setStyleSheet(STYLE_SHEET)
 
         # Title label
         self.add_title_label("Adaptive Audio Equalizer")
