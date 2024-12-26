@@ -29,9 +29,8 @@ class SpotifyIntegration:
         self.auth_manager = SpotifyClientCredentials(os.getenv("SPOTIFY_CLIENT_ID"), os.getenv("SPOTIFY_CLIENT_SECRET"))
         self.sp = spotipy.Spotify(auth_manager=self.auth_manager)
 
-        # Load trained genre model
-        with open(get_resource_path("./genre/genre_model.pkl"), "rb") as file:
-            self.genre_model = pickle.load(file)
+        # Initialize genre model as None
+        self.genre_model = None
 
         # Automatically log in
         self.auto_log_in()
@@ -43,6 +42,12 @@ class SpotifyIntegration:
             self.spotify = spotipy.Spotify(auth=self.token)
         except Exception as e:
             print(f"Error during automatic login: {e}")
+
+    def load_genre_model(self):
+        """Load the trained genre model only when needed."""
+        if self.genre_model is None:
+            with open(get_resource_path("./genre/genre_model.pkl"), "rb") as file:
+                self.genre_model = pickle.load(file)
 
     def refresh_login(self):
         """Refresh the Spotify login token."""
@@ -91,6 +96,7 @@ class SpotifyIntegration:
         """
         Predict the broad genre using the trained model based on sub-genres.
         """
+        self.load_genre_model()  # Load the model only when needed
         if not sub_genres:
             return "Unknown"
         try:
