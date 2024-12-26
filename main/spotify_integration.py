@@ -55,6 +55,7 @@ class SpotifyIntegration:
 
     def get_current_song(self):
         """Fetch the current song title and artist."""
+        self.refresh_login()
         if not self.spotify:
             return None
         try:
