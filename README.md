@@ -2,6 +2,10 @@
 
 AutoEQ is an innovative application designed to enhance the listening experience across all audio sources on your computer. It provides a customizable 10-band graphic equalizer, includes genre-specific presets, integrates with Spotify to display the currently playing track, and enables automatic genre-based equalizer adjustments.
 
+Full Application:
+
+![Full Application](images/full.png)
+
 Here are some images showing the different genres available in the AutoEQ:
 
 | Hip-Hop | R&B |
