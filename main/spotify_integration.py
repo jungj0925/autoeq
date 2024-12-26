@@ -49,7 +49,6 @@ class SpotifyIntegration:
         try:
             self.token = self.spotify_oauth.get_access_token(as_dict=False)
             self.spotify = spotipy.Spotify(auth=self.token)
-            print("Spotify login refreshed successfully.")
         except Exception as e:
             print(f"Error refreshing Spotify login: {e}")
 
