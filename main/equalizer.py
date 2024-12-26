@@ -331,8 +331,19 @@ class EqualizerWindow(QWidget):
     
     def closeEvent(self, event):
         """Handle actions on close."""
-        self.save_genre_presets()
-        event.accept()
+        reply = QMessageBox.question(
+            self,
+            "Confirm Exit",
+            "Are you sure you want to exit the application?",
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.No  # Default button
+        )
+
+        if reply == QMessageBox.Yes:
+            self.save_genre_presets()  # Save presets before exiting
+            event.accept()  # Accept the event to close the application
+        else:
+            event.ignore()  # Ignore the event to keep the application open
 
     def save_custom_presets(self):
         """Save custom presets to a file."""
