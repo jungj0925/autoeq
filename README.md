@@ -24,10 +24,11 @@ Here are some images showing the different genres available in the AutoEQ:
 - **Real-Time Adjustment**: Applies equalizer settings to system-wide audio with low latency.
 - **Flat Mode**: Reset all bands to 0 dB using the "Flat" preset.
 
-### Spotify Integration
+### Genre Detection and Integration - Spotify
 - **"Now Playing" Display**: Displays the currently playing track in real time.
 - **Automatic Updates**: Updates every second to show the latest song from your Spotify account.
 - **Genre Detection**: Detects the genre of the currently playing track and automatically adjusts the EQ based on pre-trained machine learning models.
+- **Genre Assignment**: Assign specific genres to artists, allowing for management of "Unknown" genres and correction of mislabeled ones.
 
 ---
 
