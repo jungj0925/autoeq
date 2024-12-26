@@ -28,6 +28,7 @@ class EqualizerWindow(QWidget):
         self.setGeometry(100, 100, 900, 700)
         self.equalizer_enabled = True
         self.auto_eq_enabled = True
+        self.artist_genres = self.load_artist_genres()
 
         # Initialize presets
         self.default_genre_presets = self.get_default_genre_presets()
@@ -66,6 +67,10 @@ class EqualizerWindow(QWidget):
 
         # System Tray Integration
         self.setup_tray_icon()
+
+        # Artist Genre Controls
+        self.add_artist_genre_controls()
+
 
     def add_title_label(self, title):
         title_label = QLabel(title)
@@ -184,6 +189,34 @@ class EqualizerWindow(QWidget):
         self.preset_dropdown.addItem("Flat")  # Default Flat EQ
         self.preset_dropdown.addItems(list(self.genre_presets.keys()) + list(self.custom_presets.keys()))
 
+    def add_artist_genre_controls(self):
+        layout = QHBoxLayout()
+
+        # Artist input (auto-filled)
+        self.artist_input = QLineEdit()
+        self.artist_input.setPlaceholderText("Enter artist name")
+        self.artist_input.setReadOnly(True)  # Make it read-only for autofill
+        layout.addWidget(self.artist_input)
+
+        # Genre input
+        self.genre_input = QLineEdit()
+        self.genre_input.setPlaceholderText("Enter genre")
+        layout.addWidget(self.genre_input)
+
+        # Assign genre button
+        self.assign_button = QPushButton("Assign Genre/EQ")
+        self.assign_button.clicked.connect(self.assign_genre_to_artist)
+        layout.addWidget(self.assign_button)
+
+        # Reset genre button
+        self.reset_button = QPushButton("Reset Genre")
+        self.reset_button.clicked.connect(self.reset_genre_for_artist)
+        layout.addWidget(self.reset_button)
+
+        self.main_layout.addLayout(layout)
+
+
+
     def apply_preset(self):
         """Apply the selected preset to the sliders."""
         preset_name = self.preset_dropdown.currentText()
@@ -209,17 +242,32 @@ class EqualizerWindow(QWidget):
         song_info = self.spotify.get_current_song()
         if song_info:
             artist_name = song_info.split(" by ")[1]
-            sub_genres = self.spotify.get_genres_for_song(artist_name)
-            if sub_genres:
-                broad_genre = self.spotify.predict_broad_genre(sub_genres)
-                self.now_playing_label.setText(f"Currently streaming: {song_info} ({broad_genre})")
-                # Automatically apply the equalizer preset for the detected genre only if Auto EQ is enabled
+
+            # Autofill the artist input field
+            self.artist_input.setText(artist_name)
+
+            # Check if the artist has an assigned genre
+            if artist_name in self.artist_genres:
+                assigned_genre = self.artist_genres[artist_name]
+                self.now_playing_label.setText(f"Currently streaming: {song_info} ({assigned_genre})")
                 if self.auto_eq_enabled:
-                    self.apply_preset_by_name(broad_genre)
+                    self.apply_preset_by_name(assigned_genre)
             else:
-                self.now_playing_label.setText(f"Currently streaming: {song_info} (Genre: Unknown)")
+                sub_genres = self.spotify.get_genres_for_song(artist_name)
+                if sub_genres:
+                    broad_genre = self.spotify.predict_broad_genre(sub_genres)
+                    self.now_playing_label.setText(f"Currently streaming: {song_info} ({broad_genre})")
+                    if self.auto_eq_enabled:
+                        self.apply_preset_by_name(broad_genre)
+                else:
+                    self.now_playing_label.setText(f"Currently streaming: {song_info} (Genre: Unknown)")
+                    self.genre_input.clear()  # Clear the genre field for a new assignment
         else:
             self.now_playing_label.setText("Currently streaming: Not Available")
+            self.artist_input.clear()
+            self.genre_input.clear()
+
+
 
     def toggle_auto_eq(self):
         """Toggle the Auto EQ feature."""
@@ -377,16 +425,15 @@ class EqualizerWindow(QWidget):
         self.bypass_button.setText("Equalizer: Enabled" if self.equalizer_enabled else "Equalizer: Bypassed")
 
     def apply_preset_by_name(self, preset_name):
-        """
-        Apply a preset by its name and update sliders and dropdown menu.
-        """
-        if preset_name in self.genre_presets:
-            values = self.genre_presets[preset_name]
-        elif preset_name in self.custom_presets:
-            values = self.custom_presets[preset_name]
-        else:
+        """Apply a preset by its name and update sliders."""
+        if preset_name not in self.genre_presets and preset_name not in self.custom_presets:
             QMessageBox.warning(self, "Error", f"No preset found for: {preset_name}")
             return
+
+        if preset_name in self.genre_presets:
+            values = self.genre_presets[preset_name]
+        else:
+            values = self.custom_presets[preset_name]
 
         for slider, value in zip(self.sliders, values):
             slider.setValue(value)
@@ -394,7 +441,6 @@ class EqualizerWindow(QWidget):
         self.preset_dropdown.blockSignals(True)
         self.preset_dropdown.setCurrentText(preset_name)
         self.preset_dropdown.blockSignals(False)
-
 
 
 
@@ -559,4 +605,62 @@ class EqualizerWindow(QWidget):
         """Refresh the Spotify login."""
         self.spotify.refresh_login()
         QMessageBox.information(self, "Refresh Login", "Spotify login refreshed successfully.")
+
+    def load_artist_genres(self):
+        """Load the artist-genre mapping from a file."""
+        try:
+            with open(get_resource_path("artist_genres.pkl"), "rb") as file:
+                return pickle.load(file)
+        except (FileNotFoundError, EOFError, pickle.UnpicklingError):
+            return {}
+
+    def save_artist_genres(self):
+        """Save the artist-genre mapping to a file."""
+        with open(get_resource_path("artist_genres.pkl"), "wb") as file:
+            pickle.dump(self.artist_genres, file)
+    
+    def assign_genre_to_artist(self):
+        """Assign a genre to an artist and validate before proceeding."""
+        artist = self.artist_input.text().strip()
+        genre = self.genre_input.text().strip()
+
+        if not artist or not genre:
+            QMessageBox.warning(self, "Error", "Both artist and genre fields must be filled.")
+            return  # Exit early if inputs are invalid
+
+        # Check if the genre preset exists before assigning
+        if genre not in self.genre_presets and genre not in self.custom_presets:
+            QMessageBox.warning(self, "Error", f"Preset '{genre}' does not exist.")
+            return  # Exit early if the genre preset is invalid
+
+        # Assign the genre to the artist
+        self.artist_genres[artist] = genre
+        self.save_artist_genres()
+
+        # Clear fields after assigning
+        self.artist_input.clear()
+        self.genre_input.clear()
+
+        QMessageBox.information(self, "Success", f"Assigned genre '{genre}' to artist '{artist}'.")
+
+
+
+    def reset_genre_for_artist(self):
+        """Reset the assigned genre for the current artist."""
+        artist = self.artist_input.text().strip()
+
+        if not artist:
+            QMessageBox.warning(self, "Error", "No artist selected to reset.")
+            return
+
+        if artist in self.artist_genres:
+            del self.artist_genres[artist]
+            self.save_artist_genres()
+            QMessageBox.information(self, "Success", f"Reset genre assignment for artist '{artist}'.")
+        else:
+            QMessageBox.warning(self, "Error", f"No genre assignment found for artist '{artist}'.")
+
+        # Clear fields after resetting
+        self.artist_input.clear()
+        self.genre_input.clear()
 
