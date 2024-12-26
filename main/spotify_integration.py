@@ -44,6 +44,15 @@ class SpotifyIntegration:
         except Exception as e:
             print(f"Error during automatic login: {e}")
 
+    def refresh_login(self):
+        """Refresh the Spotify login token."""
+        try:
+            self.token = self.spotify_oauth.get_access_token(as_dict=False)
+            self.spotify = spotipy.Spotify(auth=self.token)
+            print("Spotify login refreshed successfully.")
+        except Exception as e:
+            print(f"Error refreshing Spotify login: {e}")
+
     def get_current_song(self):
         """Fetch the current song title and artist."""
         if not self.spotify:

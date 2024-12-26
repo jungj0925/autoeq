@@ -3,6 +3,15 @@ build/
 target/
 debug/
 release/
+dist/
+*.spec
+
+# PyInstaller temporary files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.log
 
 # Qt-specific
 *.user
@@ -25,7 +34,21 @@ Cargo.lock
 # OS-specific
 .DS_Store
 Thumbs.db
+
+# Python-specific
 .env
 .cache
+pip-wheel-metadata/
+*.egg-info/
+*.egg
 
-__pycache__/
+# Joblib and other serialized model files
+*.joblib
+*.pkl
+
+# Generated assets and logs
+*.png
+*.log
+
+# Spotify-specific
+.token.*

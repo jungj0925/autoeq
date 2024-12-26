@@ -129,22 +129,27 @@ class EqualizerWindow(QWidget):
         delete_button.clicked.connect(self.delete_custom_preset)
         self.preset_layout.addWidget(delete_button)
 
+        reset_button = QPushButton("Reset Preset")
+        reset_button.clicked.connect(self.reset_selected_genre_preset)
+        self.preset_layout.addWidget(reset_button)
+
         self.main_layout.addLayout(self.preset_layout)
 
     def add_buttons(self):
         buttons_layout = QHBoxLayout()
 
-        bypass_button = QPushButton("Bypass")
-        bypass_button.clicked.connect(self.toggle_bypass)
-        buttons_layout.addWidget(bypass_button)
+        self.bypass_button = QPushButton("Equalizer: Enabled" if self.equalizer_enabled else "Equalizer: Bypassed")
+        self.bypass_button.clicked.connect(self.toggle_bypass)
+        buttons_layout.addWidget(self.bypass_button)
 
-        reset_button = QPushButton("Reset Selected Preset")
-        reset_button.clicked.connect(self.reset_selected_genre_preset)
-        buttons_layout.addWidget(reset_button)
+        self.auto_eq_button = QPushButton("Auto EQ: Enabled" if self.auto_eq_enabled else "Auto EQ: Disabled")
+        self.auto_eq_button.clicked.connect(self.toggle_auto_eq)
+        buttons_layout.addWidget(self.auto_eq_button)
 
-        auto_eq_button = QPushButton("Toggle Auto EQ")
-        auto_eq_button.clicked.connect(self.toggle_auto_eq)
-        buttons_layout.addWidget(auto_eq_button)
+        # Add a button to refresh Spotify login
+        refresh_login_button = QPushButton("Refresh Spotify Login")
+        refresh_login_button.clicked.connect(self.refresh_spotify_login)
+        buttons_layout.addWidget(refresh_login_button)
 
         self.main_layout.addLayout(buttons_layout)
 
@@ -219,9 +224,7 @@ class EqualizerWindow(QWidget):
     def toggle_auto_eq(self):
         """Toggle the Auto EQ feature."""
         self.auto_eq_enabled = not self.auto_eq_enabled
-        status = "enabled" if self.auto_eq_enabled else "disabled"
-        QMessageBox.information(self, "Auto EQ Status", f"Auto EQ is now {status}.")
-
+        self.auto_eq_button.setText("Auto EQ: Enabled" if self.auto_eq_enabled else "Auto EQ: Disabled")
 
     def save_custom_preset(self):
         """
@@ -360,10 +363,7 @@ class EqualizerWindow(QWidget):
     def toggle_bypass(self):
         """Toggle the equalizer bypass mode."""
         self.equalizer_enabled = not self.equalizer_enabled
-        QMessageBox.information(
-            self, "Equalizer Status",
-            "Equalizer Enabled" if self.equalizer_enabled else "Equalizer Bypassed"
-        )
+        self.bypass_button.setText("Equalizer: Enabled" if self.equalizer_enabled else "Equalizer: Bypassed")
 
     def apply_preset_by_name(self, preset_name):
         """
@@ -394,7 +394,7 @@ class EqualizerWindow(QWidget):
 
         # Check if all gains are zero or if bypass mode is enabled
         if not self.equalizer_enabled or all(slider.value() == 0 for slider in self.sliders):
-            return (in_data, pyaudio.paContinue)
+            return (in_data, pyaudio.paContinue)  # Bypass the processing
 
         # Split into left and right channels
         left_channel = audio_data[:, 0]
@@ -415,7 +415,19 @@ class EqualizerWindow(QWidget):
         p = pyaudio.PyAudio()
 
         # Fixed input device index
-        input_device_index = 1  # Ensure this is correct for your setup
+        input_device_index = None  # Ensure this is correct for your setup
+        input_keywords = ["CABLE Output - TEST"]
+
+        for i in range(p.get_device_count()):
+            device_info = p.get_device_info_by_index(i)
+            device_name = device_info['name']
+            for keyword in input_keywords:
+                if keyword.lower() in device_name.lower():
+                    input_device_index = i
+                    print(f"Selected Input Device: Index {i}: {device_name}")
+                    break
+            if input_device_index is not None:
+                break
 
         # Automatically detect output device
         output_device_index = None
@@ -531,4 +543,9 @@ class EqualizerWindow(QWidget):
 
         # Clip the final output to the int16 range
         return np.clip(processed_audio, -32768, 32767).astype(np.int16)
+
+    def refresh_spotify_login(self):
+        """Refresh the Spotify login."""
+        self.spotify.refresh_login()
+        QMessageBox.information(self, "Refresh Login", "Spotify login refreshed successfully.")
 
