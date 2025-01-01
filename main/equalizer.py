@@ -166,6 +166,11 @@ class EqualizerWindow(QWidget):
         self.auto_eq_button.clicked.connect(self.toggle_auto_eq)
         buttons_layout.addWidget(self.auto_eq_button)
 
+        # Add a button to refresh output device
+        refresh_app_button = QPushButton("Refresh App")
+        refresh_app_button.clicked.connect(self.confirm_restart)
+        buttons_layout.addWidget(refresh_app_button)
+
         # # Add a button to refresh Spotify login
         # refresh_login_button = QPushButton("Refresh Spotify Login")
         # refresh_login_button.clicked.connect(self.refresh_spotify_login)
@@ -531,6 +536,28 @@ class EqualizerWindow(QWidget):
             frames_per_buffer=1024,
             stream_callback=self.audio_callback
         )
+
+    def confirm_restart(self):
+        """
+        Show a confirmation dialog to restart the application.
+        """
+        reply = QMessageBox.question(
+            self,
+            "Confirm Restart",
+            "Are you sure you want to restart the application? This will refresh the device list.",
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.No  # Default to No
+        )
+
+        if reply == QMessageBox.Yes:
+            self.restart_script()  # Restart the application
+
+    def restart_script(self):
+        """
+        Restart the script to force reinitialization of PyAudio.
+        """
+        python = sys.executable  # Path to the Python interpreter
+        os.execv(python, [python] + sys.argv)  # Restart the script with the same arguments
 
     def peaking_eq(self, f0, Q, gain_db, sample_rate):
         """
