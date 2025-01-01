@@ -32,8 +32,8 @@ if __name__ == "__main__":
     splash = AnimatedSplashScreen()
     splash.show()
 
-    # Simulate loading time
-    sleep(1)  # Simulate a delay for loading resources
+    # Force the application to process events to instantly display the splash screen
+    app.processEvents()
 
     # Initialize your main window here
     window = EqualizerWindow()
